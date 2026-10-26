@@ -10,7 +10,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#000000">
   
-  <title>나의 벙커 (My Bunker) - v2.0.0 (Tactical & Onboarding Update)</title>
+  <title>나의 벙커 (My Bunker) - v2.5.0 (Last Stand & Flamethrower Update)</title>
   
   <style>
     /* 글로벌 터치 잠금은 유지하되, UI 모달창에서는 풀기 위해 구조 조정 */
@@ -118,6 +118,8 @@
     #upgrade-list { -ms-overflow-style: none; scrollbar-width: none; touch-action: pan-y !important; pointer-events: auto; }
     #collection-list::-webkit-scrollbar { display: none; }
     #collection-list { -ms-overflow-style: none; scrollbar-width: none; touch-action: pan-y !important; pointer-events: auto; }
+    #ls-craft-list::-webkit-scrollbar { display: none; }
+    #ls-craft-list { -ms-overflow-style: none; scrollbar-width: none; touch-action: pan-y !important; pointer-events: auto; }
 
     .upgrade-item { background: rgba(20, 20, 20, 0.8); border: 1px solid #444; border-radius: 6px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left; gap: 15px; }
     .upgrade-info { flex: 1; }
@@ -280,7 +282,7 @@
   <!-- [Phase 16 Splash Screen] -->
   <div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:99999; display:flex; flex-direction:column; justify-content:center; align-items:center; transition:opacity 0.8s; pointer-events:none;">
     <h1 style="color:#e74c3c; font-size:48px; letter-spacing:8px; font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; text-shadow:0 0 20px rgba(231,76,60,0.5); margin:0;">MY BUNKER</h1>
-    <p style="color:#7f8c8d; font-size:14px; font-family:monospace; margin-top:15px; letter-spacing:2px;">v2.0.0 TACTICAL OVERHAUL LOADING...</p>
+    <p style="color:#7f8c8d; font-size:14px; font-family:monospace; margin-top:15px; letter-spacing:2px;">v2.5.0 LAST STAND UPDATE LOADING...</p>
   </div>
 
   <div id="orientation-warning">
@@ -340,12 +342,13 @@
     <span id="buff-timer-display">[BUFF] 2X 03:00</span>
   </div>
 
-  <!-- [최후의 저항] 4대 핵심 자원 표시 바 (이모티콘 제거 완료) -->
+  <!-- [최후의 저항] 5대 핵심 자원 표시 바 (기름 추가, 이모티콘 없음) -->
   <div id="ls-res-hud">
     <div class="ls-res-badge" style="color:#bdc3c7;">[고철]:<span id="ls-val-metal">0</span></div>
     <div class="ls-res-badge" style="color:#e67e22;">[화약]:<span id="ls-val-powder">0</span></div>
     <div class="ls-res-badge" style="color:#95a5a6;">[콘크리트]:<span id="ls-val-concrete">0</span></div>
     <div class="ls-res-badge" style="color:#2ecc71;">[의료품]:<span id="ls-val-med">0</span></div>
+    <div class="ls-res-badge" style="color:#ff5533;">[기름]:<span id="ls-val-fuel">0</span></div>
   </div>
 
   <!-- [최후의 저항] 건축 전환 / 제작대 / 웨이브 조기 시작 액션 바 (이모티콘 제거 완료) -->
@@ -359,7 +362,7 @@
     <div class="hud-card" id="hud-hp">
       <div style="color:#e74c3c; font-weight:bold; display: flex; align-items: center; gap: 5px;">
         <svg class="icon-inline" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> 
-        HP <span id="hp-num" style="color:#fff;">100</span>%
+        HP <span id="hp-num" style="color:#fff;">100/100</span>
       </div>
       <div class="hp-bar-bg"><div id="hp-bar" class="hp-bar-fill"></div></div>
     </div>
@@ -409,7 +412,8 @@
       [고철]: <span id="c-metal" style="color:#fff;font-weight:bold;">0</span> | 
       [화약]: <span id="c-powder" style="color:#e67e22;font-weight:bold;">0</span> | 
       [콘크리트]: <span id="c-concrete" style="color:#95a5a6;font-weight:bold;">0</span> | 
-      [의료품]: <span id="c-med" style="color:#2ecc71;font-weight:bold;">0</span>
+      [의료품]: <span id="c-med" style="color:#2ecc71;font-weight:bold;">0</span> | 
+      [기름]: <span id="c-fuel" style="color:#ff5533;font-weight:bold;">0</span>
     </h2>
     <div id="ls-craft-list" style="width: 92%; max-width: 480px; text-align: left; margin-bottom: 16px; overflow-y:auto; max-height: 52vh; padding-right:5px;"></div>
     <button class="platform-btn" onclick="closeLSCraftModal()" style="background:#2c3e50;">전장으로 복귀 (C / ESC)</button>
@@ -617,7 +621,7 @@
         <button class="mobile-btn btn-jump" onpointerdown="triggerJump(event)">
             <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
         </button>
-        <button class="mobile-btn btn-fire" onpointerdown="triggerPrimaryAction(event)">
+        <button class="mobile-btn btn-fire" id="btn-mobile-fire" onpointerdown="startMobileFire(event)" onpointerup="stopMobileFire(event)" onpointercancel="stopMobileFire(event)" onpointerleave="stopMobileFire(event)" ontouchend="stopMobileFire(event)" ontouchcancel="stopMobileFire(event)">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         </button>
       </div>
@@ -654,7 +658,7 @@
           disc3: "게임에 등장하는 모든 세력, 인물, 복장 등은 역사적 모티브를 둔 가상의 장치일 뿐이며, 개발진은 전쟁의 비극을 엄중히 인식하고 평화와 인류 보편의 가치를 지향합니다.",
           discChk: "위 내용을 충분히 숙지하였으며, 이에 동의합니다.",
           discBtn: "동의 및 게임 입장 (ENTER)",
-          startTitle: "MY BUNKER", startSub: "1945 BERLIN: THE LAST STAND (v2.0)",
+          startTitle: "MY BUNKER", startSub: "1945 BERLIN: THE LAST STAND (v2.5)",
           guideTitle: "[전술 생존 브리핑]",
           guide1: "<b>전술 조작:</b> 이동(WASD/조이스틱), 사격/채굴(좌클릭/발사), <b>정밀조준 ADS(우클릭/ADS버튼)</b>",
           guide2: "<b>5분 단계별 공습:</b> 0~1분(안전) ➔ 1~2.5분(-10m) ➔ 2.5~4분(-30m/가스) ➔ 4~5분(-45m 붕괴). 곡괭이(3번)로 파고 내려가세요!",
@@ -679,7 +683,7 @@
           disc3: "All factions, characters, and outfits are fictional devices inspired by history. The developers strictly recognize the tragedy of war and aim for universal peace.",
           discChk: "I have fully read and agree to the above terms.",
           discBtn: "Agree & Enter (ENTER)",
-          startTitle: "MY BUNKER", startSub: "1945 BERLIN: THE LAST STAND (v2.0)",
+          startTitle: "MY BUNKER", startSub: "1945 BERLIN: THE LAST STAND (v2.5)",
           guideTitle: "[Tactical Survival Briefing]",
           guide1: "<b>Controls:</b> Move(WASD/Joy), Fire/Mine(L-Click), <b>ADS Aim(R-Click/ADS Btn)</b>",
           guide2: "<b>5-Min Progressive Bombing:</b> 0-1m(Safe) ➔ 1-2.5m(-10m) ➔ 2.5-4m(-30m/Gas) ➔ 4-5m(-45m). Use Pickaxe(3) to dig deep!",
@@ -704,7 +708,7 @@
           disc3: "登場する勢力や人物は架空のものです。開発陣は戦争の悲劇を重く受け止め、平和を指向しています。",
           discChk: "上記の内容を十分に理解し、同意します。",
           discBtn: "同意してゲーム開始 (ENTER)",
-          startTitle: "MY BUNKER", startSub: "1945 BERLIN: THE LAST STAND (v2.0)",
+          startTitle: "MY BUNKER", startSub: "1945 BERLIN: THE LAST STAND (v2.5)",
           guideTitle: "[戦術サバイバルガイド]",
           guide1: "<b>操作:</b> 移動(WASD/Joy)、射撃/採掘(左クリック)、<b>ADS精密照準(右クリック/ADS)</b>",
           guide2: "<b>5分段階別空襲:</b> 0~1分(安全) ➔ 1~2.5分(-10m) ➔ 2.5~4分(-30m/ガス) ➔ 4~5分(-45m)。ツルハシ(3)で深く掘れ！",
@@ -751,21 +755,19 @@
 
     window.addEventListener('load', () => {
         applyLang(currentLang);
-        setTimeout(() => {
-            const splash = document.getElementById('splash-screen');
-            if (splash) {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            setTimeout(() => {
                 splash.style.opacity = '0';
-                setTimeout(() => {
-                    splash.style.display = 'none';
-                    if(safeGetItem('myBunkerDisclaimerAgreed', false)) { 
-                        document.getElementById('disclaimer-modal').style.display = 'none'; 
-                        document.getElementById('start-modal').style.display = 'flex'; 
-                    } else {
-                        document.getElementById('disclaimer-modal').style.display = 'flex';
-                    }
-                }, 500);
-            }
-        }, 1500);
+                setTimeout(() => { splash.style.display = 'none'; }, 400);
+            }, 400);
+        }
+        if(safeGetItem('myBunkerDisclaimerAgreed', false)) { 
+            document.getElementById('disclaimer-modal').style.display = 'none'; 
+            document.getElementById('start-modal').style.display = 'flex'; 
+        } else {
+            document.getElementById('disclaimer-modal').style.display = 'flex';
+        }
     });
 
     let globalBgmVolume = parseFloat(localStorage.getItem('myBunkerBgmVol') ?? '1.0');
@@ -777,7 +779,15 @@
     let equippedSkins = safeGetItem('myBunkerEquippedSkins', { PISTOL: 'pistol_default', MP40: 'mp40_default', KAR98K: 'kar_default', PICKAXE: 'pick_default' });
     let currentArmoryTab = 'STAT';
     let currentPreviewSkinId = 'pistol_silver';
-    let upgrades = safeGetItem('myBunkerUpgrades', { hp: 0, pickaxe: 0, ammo: 0, speed: 0, regen: 0, fist: 0 });
+    let rawUpgrades = safeGetItem('myBunkerUpgrades', { hp: 0, pickaxe: 0, ammo: 0, speed: 0, regen: 0, fist: 0 }) || {};
+    let upgrades = {
+        hp: Number(rawUpgrades.hp) || 0,
+        pickaxe: Number(rawUpgrades.pickaxe) || 0,
+        ammo: Number(rawUpgrades.ammo) || 0,
+        speed: Number(rawUpgrades.speed) || 0,
+        regen: Number(rawUpgrades.regen) || 0,
+        fist: Number(rawUpgrades.fist) || 0
+    };
     let is2xScrapActive = false;
     
     let runKillCount = 0;
@@ -874,37 +884,62 @@
 
         let pState = gameState;
         if (pState !== 'START' && pState !== 'ENDING') gameState = 'AD_PLAYING';
+        let adHandled = false;
 
-        adBreak({
-            type: 'reward',
-            name: 'bunker_reward_item',
-            beforeReward: (showAdFn) => {
-                if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
-                showAdFn();
-            },
-            adDismissed: () => {
-                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-                if (gameState === 'AD_PLAYING') gameState = pState;
-                if (onCancel) onCancel();
-                setTimeout(() => {
-                    window.focus();
-                    if (platformMode === 'PC' && isGameStarted && gameState !== 'START' && gameState !== 'ENDING' && gameState !== 'REVIVE_WAIT') {
-                        document.body.requestPointerLock();
-                    }
-                }, 100);
-            },
-            adViewed: () => {
+        const fallbackTimer = setTimeout(() => {
+            if (!adHandled) {
+                adHandled = true;
                 if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
                 if (gameState === 'AD_PLAYING') gameState = pState;
                 if (onSuccess) onSuccess();
-                setTimeout(() => {
-                    window.focus();
-                    if (platformMode === 'PC' && isGameStarted && gameState !== 'START' && gameState !== 'ENDING' && gameState !== 'REVIVE_WAIT') {
-                        document.body.requestPointerLock();
-                    }
-                }, 100);
             }
-        });
+        }, 600);
+
+        try {
+            adBreak({
+                type: 'reward',
+                name: 'bunker_reward_item',
+                beforeReward: (showAdFn) => {
+                    clearTimeout(fallbackTimer);
+                    if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+                    showAdFn();
+                },
+                adDismissed: () => {
+                    if (adHandled) return;
+                    adHandled = true;
+                    clearTimeout(fallbackTimer);
+                    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+                    if (gameState === 'AD_PLAYING') gameState = pState;
+                    if (onCancel) onCancel();
+                    setTimeout(() => {
+                        window.focus();
+                        if (platformMode === 'PC' && isGameStarted && gameState !== 'START' && gameState !== 'ENDING' && gameState !== 'REVIVE_WAIT') {
+                            try { document.body.requestPointerLock(); } catch(e) {}
+                        }
+                    }, 100);
+                },
+                adViewed: () => {
+                    if (adHandled) return;
+                    adHandled = true;
+                    clearTimeout(fallbackTimer);
+                    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+                    if (gameState === 'AD_PLAYING') gameState = pState;
+                    if (onSuccess) onSuccess();
+                    setTimeout(() => {
+                        window.focus();
+                        if (platformMode === 'PC' && isGameStarted && gameState !== 'START' && gameState !== 'ENDING' && gameState !== 'REVIVE_WAIT') {
+                            try { document.body.requestPointerLock(); } catch(e) {}
+                        }
+                    }, 100);
+                }
+            });
+        } catch (err) {
+            if (!adHandled) {
+                adHandled = true;
+                clearTimeout(fallbackTimer);
+                if (onSuccess) onSuccess();
+            }
+        }
     }
 
     let lastLuckyBoxTime = 0;
@@ -1114,6 +1149,7 @@
       dryFire() { this.playOsc('triangle', 1600, 800, 0.03, 0.3); },
       grenadePin() { this.playOsc('sine', 2600, 1400, 0.06, 0.35); setTimeout(() => this.playOsc('sawtooth', 160, 70, 0.1, 0.3), 60); },
       mineSpring() { this.playOsc('sine', 700, 2400, 0.15, 0.6); },
+      flame() { this.playOsc('sawtooth', 130, 55, 0.14, 0.35); },
       heartbeat() { this.playOsc('sine', 65, 32, 0.14, 0.55); setTimeout(() => this.playOsc('sine', 55, 28, 0.16, 0.4), 190); },
       siren() {
         if (!audioCtx) return;
@@ -1150,9 +1186,12 @@
     let lsIsRest = false;
     let lsRestTimer = 0;
     let lsEnemiesToSpawn = 0;
-    let lsRes = { metal: 10, powder: 6, concrete: 6, med: 2 };
+    let lsRes = { metal: 10, powder: 6, concrete: 6, med: 2, fuel: 0 };
     let lsWorkbenchTier = 1;
     let lsGunType = 'PISTOL';
+    let lsHasFlamethrower = false;
+    let lsArmorBought1 = false;
+    let lsArmorBought2 = false;
     let isBolting = false;
     let lsNadeCount = 2;
     let lsBuildIdx = 0;
@@ -1268,17 +1307,19 @@
     const particleGeo = new THREE.BoxGeometry(0.14, 0.14, 0.14);
     const bloodMat = new THREE.MeshBasicMaterial({ color: 0xb01515 });
     const sparkMat = new THREE.MeshBasicMaterial({ color: 0xffdd44 });
+    const fireMat = new THREE.MeshBasicMaterial({ color: 0xff5500 });
     const particles = [];
 
     function spawnParticles(x, y, z, type) { 
-        if (particles.length > 65) return;
+        if (particles.length > 75) return;
         let mat = materials[type] || materials['dirt'];
         if (type === 'blood') mat = bloodMat;
         else if (type === 'spark') mat = sparkMat;
-        const count = (type === 'blood' || type === 'spark') ? 6 : 3;
+        else if (type === 'fire') mat = fireMat;
+        const count = (type === 'blood' || type === 'spark' || type === 'fire') ? 5 : 3;
         for(let i=0; i<count; i++) { 
             const mesh = new THREE.Mesh(particleGeo, mat); 
-            mesh.position.set(x + (type==='blood'||type==='spark' ? 0 : 0.5) + (Math.random()-0.5)*0.4, y + (type==='blood'||type==='spark' ? 0 : 0.5) + (Math.random()-0.5)*0.4, z + (type==='blood'||type==='spark' ? 0 : 0.5) + (Math.random()-0.5)*0.4); 
+            mesh.position.set(x + (type==='blood'||type==='spark'||type==='fire' ? 0 : 0.5) + (Math.random()-0.5)*0.4, y + (type==='blood'||type==='spark'||type==='fire' ? 0 : 0.5) + (Math.random()-0.5)*0.4, z + (type==='blood'||type==='spark'||type==='fire' ? 0 : 0.5) + (Math.random()-0.5)*0.4); 
             scene.add(mesh); 
             particles.push({ mesh, vx: (Math.random()-0.5)*0.18, vy: Math.random()*0.16 + 0.08, vz: (Math.random()-0.5)*0.18, life: 1.0 }); 
         } 
@@ -1601,7 +1642,7 @@
                 if (isBoundaryWall) { 
                     const isDoorOpening = ((x === -halfSize || x === halfSize) && Math.abs(z) <= 1) || ((z === -halfSize || z === halfSize) && Math.abs(x) <= 1); 
                     for (let y = MIN_DIG_Y + 1; y <= 4; y++) { 
-                        if (z === -halfSize && Math.abs(x) <= 1 && y >= MIN_DIG_Y + 1 && y <= MIN_DIG_Y + 2) { 
+                        if (!isLastStand && z === -halfSize && Math.abs(x) <= 1 && y >= MIN_DIG_Y + 1 && y <= MIN_DIG_Y + 2) { 
                             addVoxelLogic(x, y, z, 'portal'); 
                             continue; 
                         } 
@@ -1618,10 +1659,12 @@
                         else if (isInteriorWall) addVoxelLogic(x, y, z, 'passage'); 
                     } 
                     for (let y = -1; y > MIN_DIG_Y; y--) { 
-                        if (z < -15 && x >= -1 && x <= 1 && y <= MIN_DIG_Y + 2) continue; 
-                        const isAtomicZone = Math.abs(x - 17) <= 1 && Math.abs(y - (-26)) <= 1 && Math.abs(z - 17) <= 1; 
-                        const isUboatZone = (x >= -18 && x <= -15) && (y >= -21 && y <= -18) && (z >= 15 && z <= 18); 
-                        if (isAtomicZone || isUboatZone) continue; 
+                        if (!isLastStand) {
+                            if (z < -15 && x >= -1 && x <= 1 && y <= MIN_DIG_Y + 2) continue; 
+                            const isAtomicZone = Math.abs(x - 17) <= 1 && Math.abs(y - (-26)) <= 1 && Math.abs(z - 17) <= 1; 
+                            const isUboatZone = (x >= -18 && x <= -15) && (y >= -21 && y <= -18) && (z >= 15 && z <= 18); 
+                            if (isAtomicZone || isUboatZone) continue; 
+                        }
                         if (y < -10 && Math.random() < 0.25) addVoxelLogic(x, y, z, 'rock'); 
                         else if (y === -12 && Math.abs(x) < 8 && Math.abs(z) < 8) addVoxelLogic(x, y, z, 'passage'); 
                         else addVoxelLogic(x, y, z, 'dirt'); 
@@ -1629,20 +1672,22 @@
                 } 
             } 
         } 
-        const argentinaLight = new THREE.PointLight(0x0088ff, 2.0, 15); 
-        argentinaLight.position.set(0, MIN_DIG_Y + 1.5, -19); scene.add(argentinaLight); 
-        
-        addVoxelLogic(17, -26, 17, 'atomic_door'); 
-        const atomicLight = new THREE.PointLight(0x00ffaa, 3.0, 15); 
-        atomicLight.position.set(17, -26, 17); scene.add(atomicLight); 
-        
-        const ubX = -17, ubY = -20, ubZ = 17; 
-        for(let dz = -3; dz <= 3; dz++) addVoxelLogic(ubX, ubY, ubZ + dz, 'uboat'); 
-        addVoxelLogic(ubX, ubY + 1, ubZ, 'uboat'); 
-        addVoxelLogic(ubX, ubY + 1, ubZ + 1, 'uboat'); 
-        addVoxelLogic(-16, -20, 17, 'water_rock'); addVoxelLogic(-16, -19, 17, 'water_rock'); addVoxelLogic(-17, -19, 17, 'water_rock'); addVoxelLogic(-16, -20, 16, 'water_rock'); 
-        const uboatLight = new THREE.PointLight(0x0055ff, 3.0, 15); 
-        uboatLight.position.set(-17, -20, 17); scene.add(uboatLight); 
+        if (!isLastStand) {
+            const argentinaLight = new THREE.PointLight(0x0088ff, 2.0, 15); 
+            argentinaLight.position.set(0, MIN_DIG_Y + 1.5, -19); scene.add(argentinaLight); 
+            
+            addVoxelLogic(17, -26, 17, 'atomic_door'); 
+            const atomicLight = new THREE.PointLight(0x00ffaa, 3.0, 15); 
+            atomicLight.position.set(17, -26, 17); scene.add(atomicLight); 
+            
+            const ubX = -17, ubY = -20, ubZ = 17; 
+            for(let dz = -3; dz <= 3; dz++) addVoxelLogic(ubX, ubY, ubZ + dz, 'uboat'); 
+            addVoxelLogic(ubX, ubY + 1, ubZ, 'uboat'); 
+            addVoxelLogic(ubX, ubY + 1, ubZ + 1, 'uboat'); 
+            addVoxelLogic(-16, -20, 17, 'water_rock'); addVoxelLogic(-16, -19, 17, 'water_rock'); addVoxelLogic(-17, -19, 17, 'water_rock'); addVoxelLogic(-16, -20, 16, 'water_rock'); 
+            const uboatLight = new THREE.PointLight(0x0055ff, 3.0, 15); 
+            uboatLight.position.set(-17, -20, 17); scene.add(uboatLight); 
+        }
         
         voxels.forEach(v => updateVoxelMesh(v.x, v.y, v.z)); 
     }
@@ -1678,10 +1723,19 @@
     
     const pistolGroup = new THREE.Group(); 
     const gunWood = createRealisticTexture('#3e2723', 'wood'); 
+
+    // [1] 루거 P08 독립 모델 파츠 (기관단총/소총과 절대 섞이지 않도록 분리)
+    const lugerParts = new THREE.Group();
     const pBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.25, 6), matGun);
     pBarrel.rotation.x = Math.PI/2; pBarrel.position.set(0, 0.06, -0.15); 
     const pSlide = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.15), matGun); 
     pSlide.position.set(0, 0.06, 0.05); 
+    const pGrip = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.12, 0.06), gunWood); 
+    pGrip.position.set(0, -0.02, 0.1); pGrip.rotation.x = Math.PI/8; 
+    const pTrigger = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.04, 0.01), matGun); 
+    pTrigger.position.set(0, 0.02, 0.03); 
+    lugerParts.add(pBarrel, pSlide, pGrip, pTrigger);
+
     const pFrontSight = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.016, 0.01), new THREE.MeshBasicMaterial({color: 0x2ecc71}));
     pFrontSight.position.set(0, 0.082, -0.26);
     const pRearSightL = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.014, 0.01), matGun);
@@ -1689,10 +1743,6 @@
     const pRearSightR = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.014, 0.01), matGun);
     pRearSightR.position.set(0.012, 0.088, 0.11);
 
-    const pGrip = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.12, 0.06), gunWood); 
-    pGrip.position.set(0, -0.02, 0.1); pGrip.rotation.x = Math.PI/8; 
-    const pTrigger = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.04, 0.01), matGun); 
-    pTrigger.position.set(0, 0.02, 0.03); 
     const pMuzzle = new THREE.Object3D(); 
     pMuzzle.position.set(0, 0.06, -0.28); 
     const muzzleFlashMesh = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 6), new THREE.MeshBasicMaterial({ color: 0xffdd55, transparent: true, opacity: 0.9 }));
@@ -1702,21 +1752,31 @@
     const muzzleLight = new THREE.PointLight(0xffaa22, 0, 8);
     pMuzzle.add(muzzleLight);
 
+    // [2] MP40 기관단총 완전 독립 모델 파츠
     const mp40Parts = new THREE.Group();
+    const mp40Barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.22, 6), matGun);
+    mp40Barrel.rotation.x = Math.PI/2; mp40Barrel.position.set(0, 0.065, -0.26);
     const mp40Mag = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.22, 0.032), matGun);
     mp40Mag.position.set(0, -0.06, -0.12); mp40Mag.rotation.x = 0.1;
-    const mp40Receiver = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.28, 8), matGun);
-    mp40Receiver.rotation.x = Math.PI/2; mp40Receiver.position.set(0, 0.065, -0.05);
+    const mp40Receiver = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.30, 8), matGun);
+    mp40Receiver.rotation.x = Math.PI/2; mp40Receiver.position.set(0, 0.065, -0.04);
+    const mp40Grip = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.11, 0.05), gunWood);
+    mp40Grip.position.set(0, -0.02, 0.09); mp40Grip.rotation.x = Math.PI/8;
     const mp40Stock = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.025, 0.18), matGun);
-    mp40Stock.position.set(0, 0.03, 0.16);
-    mp40Parts.add(mp40Mag, mp40Receiver, mp40Stock);
+    mp40Stock.position.set(0, 0.03, 0.17);
+    mp40Parts.add(mp40Barrel, mp40Mag, mp40Receiver, mp40Grip, mp40Stock);
     mp40Parts.visible = false;
 
+    // [3] Kar98k 저격소총 완전 독립 모델 파츠
     const karParts = new THREE.Group();
-    const karWoodStock = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.055, 0.46), gunWood);
-    karWoodStock.position.set(0, 0.042, -0.12);
-    const karLongBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.45, 6), matGun);
-    karLongBarrel.rotation.x = Math.PI/2; karLongBarrel.position.set(0, 0.064, -0.28);
+    const karWoodStock = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.065, 0.52), gunWood);
+    karWoodStock.position.set(0, 0.038, -0.10);
+    const karGrip = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.10, 0.055), gunWood);
+    karGrip.position.set(0, -0.015, 0.12); karGrip.rotation.x = Math.PI/7;
+    const karLongBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.015, 0.48, 6), matGun);
+    karLongBarrel.rotation.x = Math.PI/2; karLongBarrel.position.set(0, 0.066, -0.28);
+    const karWrap = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.18, 8), gunWood);
+    karWrap.rotation.x = Math.PI/2; karWrap.position.set(0, 0.052, -0.18);
     const karBoltGroup = new THREE.Group();
     karBoltGroup.position.set(0.02, 0.068, 0.04);
     const karBoltStem = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.012, 0.012), matGun);
@@ -1724,7 +1784,7 @@
     const karBoltKnob = new THREE.Mesh(new THREE.SphereGeometry(0.014, 6, 6), matGun);
     karBoltKnob.position.set(0.042, 0, 0);
     karBoltGroup.add(karBoltStem, karBoltKnob);
-    karParts.add(karWoodStock, karLongBarrel, karBoltGroup);
+    karParts.add(karWoodStock, karGrip, karLongBarrel, karWrap, karBoltGroup);
     karParts.visible = false;
 
     const atomicCoreParts = new THREE.Group();
@@ -1738,34 +1798,42 @@
     atomicCoreParts.visible = false;
 
     function applyEquippedSkinsToInGameWeapons() {
+        const isMP40 = isLastStand && lsGunType === 'MP40';
+        const isKar = isLastStand && lsGunType === 'KAR98K';
+
         const pSkin = equippedSkins.PISTOL || 'pistol_default';
         if (pSkin === 'pistol_silver') {
             pBarrel.material = skinMats.silverChrome; pSlide.material = skinMats.silverChrome; pGrip.material = skinMats.ivoryGrip;
-            muzzleFlashMesh.material.color.setHex(0x82ccdd);
         } else if (pSkin === 'pistol_gold') {
             pBarrel.material = skinMats.gold24k; pSlide.material = skinMats.gold24k; pGrip.material = skinMats.ebonyGrip;
-            muzzleFlashMesh.material.color.setHex(0xf1c40f);
         } else {
             pBarrel.material = skinMats.gunBlack; pSlide.material = skinMats.gunBlack; pGrip.material = skinMats.woodDefault;
-            muzzleFlashMesh.material.color.setHex(0xffdd55);
         }
 
         const mSkin = equippedSkins.MP40 || 'mp40_default';
         if (mSkin === 'mp40_camo') {
-            mp40Receiver.material = skinMats.camoOlive; mp40Mag.material = skinMats.burlapWrap; mp40Stock.material = skinMats.camoOlive;
+            mp40Barrel.material = skinMats.camoOlive; mp40Receiver.material = skinMats.camoOlive; mp40Mag.material = skinMats.burlapWrap; mp40Stock.material = skinMats.camoOlive; mp40Grip.material = skinMats.burlapWrap;
         } else if (mSkin === 'mp40_crimson') {
-            mp40Receiver.material = skinMats.crimsonSteel; mp40Mag.material = skinMats.gold24k; mp40Stock.material = skinMats.crimsonSteel;
+            mp40Barrel.material = skinMats.crimsonSteel; mp40Receiver.material = skinMats.crimsonSteel; mp40Mag.material = skinMats.gold24k; mp40Stock.material = skinMats.crimsonSteel; mp40Grip.material = skinMats.ebonyGrip;
         } else {
-            mp40Receiver.material = skinMats.gunBlack; mp40Mag.material = skinMats.gunBlack; mp40Stock.material = skinMats.gunBlack;
+            mp40Barrel.material = skinMats.gunBlack; mp40Receiver.material = skinMats.gunBlack; mp40Mag.material = skinMats.gunBlack; mp40Stock.material = skinMats.gunBlack; mp40Grip.material = skinMats.woodDefault;
         }
 
         const kSkin = equippedSkins.KAR98K || 'kar_default';
         if (kSkin === 'kar_snow') {
-            karWoodStock.material = skinMats.snowWrap; karLongBarrel.material = skinMats.frostSteel; karBoltStem.material = skinMats.frostSteel;
+            karWoodStock.material = skinMats.snowWrap; karGrip.material = skinMats.snowWrap; karWrap.material = skinMats.burlapWrap; karLongBarrel.material = skinMats.frostSteel; karBoltStem.material = skinMats.frostSteel;
         } else if (kSkin === 'kar_royal') {
-            karWoodStock.material = skinMats.royalWalnut; karLongBarrel.material = skinMats.gold24k; karBoltStem.material = skinMats.gold24k;
+            karWoodStock.material = skinMats.royalWalnut; karGrip.material = skinMats.royalWalnut; karWrap.material = skinMats.gold24k; karLongBarrel.material = skinMats.gold24k; karBoltStem.material = skinMats.gold24k;
         } else {
-            karWoodStock.material = skinMats.woodDefault; karLongBarrel.material = skinMats.gunBlack; karBoltStem.material = skinMats.gunBlack;
+            karWoodStock.material = skinMats.woodDefault; karGrip.material = skinMats.woodDefault; karWrap.material = skinMats.woodDefault; karLongBarrel.material = skinMats.gunBlack; karBoltStem.material = skinMats.gunBlack;
+        }
+
+        if (!isMP40 && !isKar) {
+            if (pSkin === 'pistol_silver') muzzleFlashMesh.material.color.setHex(0x82ccdd);
+            else if (pSkin === 'pistol_gold') muzzleFlashMesh.material.color.setHex(0xf1c40f);
+            else muzzleFlashMesh.material.color.setHex(0xffdd55);
+        } else {
+            muzzleFlashMesh.material.color.setHex(0xffdd55);
         }
 
         const pkSkin = equippedSkins.PICKAXE || 'pick_default';
@@ -1782,16 +1850,16 @@
         const isMP40 = isLastStand && lsGunType === 'MP40';
         const isKar = isLastStand && lsGunType === 'KAR98K';
         const isAtomicGun = gameState === 'ATOMIC_WAVE';
+        lugerParts.visible = !isMP40 && !isKar;
         mp40Parts.visible = isMP40;
         karParts.visible = isKar;
         atomicCoreParts.visible = isAtomicGun;
-        pSlide.visible = !isKar;
         pFrontSight.position.z = isKar ? -0.46 : -0.26;
         pMuzzle.position.z = isKar ? -0.48 : -0.28;
         applyEquippedSkinsToInGameWeapons();
     }
 
-    pistolGroup.add(pMuzzle, pBarrel, pSlide, pFrontSight, pRearSightL, pRearSightR, pGrip, pTrigger, mp40Parts, karParts, atomicCoreParts); 
+    pistolGroup.add(pMuzzle, lugerParts, pFrontSight, pRearSightL, pRearSightR, mp40Parts, karParts, atomicCoreParts); 
     pistolGroup.position.set(0.15, -0.15, -0.3); handToolGroup.add(pistolGroup);
     
     const fistGroup = new THREE.Group(); 
@@ -1809,6 +1877,21 @@
     } 
     let fistR = createFist(true); const fistL = createFist(false); 
     fistGroup.add(fistR, fistL); handToolGroup.add(fistGroup);
+
+    // [v2.5.0] 플라멘베르퍼 41 (화염방사기 - 2번 슬롯 대체용 3D 모델)
+    const flamethrowerGroup = new THREE.Group();
+    const ftBody = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.032, 0.48, 8), matGun);
+    ftBody.rotation.x = Math.PI / 2; ftBody.position.set(0.18, -0.16, -0.28);
+    const ftTank = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.24, 8), new THREE.MeshLambertMaterial({ color: 0xc0392b }));
+    ftTank.position.set(0.18, -0.24, -0.18);
+    const ftNozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.022, 0.16, 8), skinMats.gold24k);
+    ftNozzle.rotation.x = Math.PI / 2; ftNozzle.position.set(0.18, -0.16, -0.55);
+    const ftPilotFlame = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.35, 6), new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.85 }));
+    ftPilotFlame.rotation.x = -Math.PI / 2; ftPilotFlame.position.set(0.18, -0.16, -0.78);
+    ftPilotFlame.visible = false;
+    flamethrowerGroup.add(ftBody, ftTank, ftNozzle, ftPilotFlame);
+    flamethrowerGroup.visible = false;
+    handToolGroup.add(flamethrowerGroup);
     
     const pickGroup = new THREE.Group(); 
     const pHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.4, 6), gunWood); 
@@ -1853,8 +1936,10 @@
     scene.add(buildPreviewMesh);
     
     function updateHandModel() { 
+        const useFlamer = isLastStand && lsHasFlamethrower;
         pistolGroup.visible = (player.activeSlot === 1); 
-        fistGroup.visible = (player.activeSlot === 2); 
+        fistGroup.visible = (player.activeSlot === 2 && !useFlamer); 
+        flamethrowerGroup.visible = (player.activeSlot === 2 && useFlamer);
         pickGroup.visible = (player.activeSlot === 3); 
         panzerGroup.visible = (player.activeSlot === 4); 
         buildToolGroup.visible = (player.activeSlot === 5);
@@ -1921,6 +2006,12 @@
         sStock: new THREE.BoxGeometry(0.05, 0.08, 0.35),
         drumMag: new THREE.CylinderGeometry(0.08, 0.08, 0.05, 8),
         backpack: new THREE.BoxGeometry(0.38, 0.45, 0.14),
+        fuelTank: new THREE.CylinderGeometry(0.14, 0.14, 0.64, 8),
+        gasTankTop: new THREE.SphereGeometry(0.14, 8, 6),
+        flamerApron: new THREE.BoxGeometry(0.52, 0.62, 0.06),
+        goggles: new THREE.BoxGeometry(0.28, 0.10, 0.06),
+        flamerNozzle: new THREE.CylinderGeometry(0.032, 0.04, 0.78, 8),
+        pilotLight: new THREE.SphereGeometry(0.055, 6, 6),
         rifleBody: new THREE.BoxGeometry(0.04, 0.07, 0.85),
         rBarrel: new THREE.BoxGeometry(0.02, 0.02, 0.4),
         head: new THREE.BoxGeometry(0.28, 0.28, 0.28),
@@ -1937,16 +2028,35 @@
     ENEMY_GEO.leg.translate(0, -0.25, 0);
 
     const matSovietBody = baseMatSoldierBody.clone(); matSovietBody.color.setHex(0x523f33);
+    const matUSFlamerBody = baseMatSoldierBody.clone(); matUSFlamerBody.color.setHex(0xc85a17);
+    const matFlamerHelmet = baseMatSoldierHelmet.clone(); matFlamerHelmet.color.setHex(0xd35400);
+    const matFlamerApron = new THREE.MeshLambertMaterial({ color: 0x2c221e });
+    const matFuelTank = new THREE.MeshLambertMaterial({ color: 0xff3b00, emissive: 0x992200 });
+    const matFlamerGoggle = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
+    const matPilotFlame = new THREE.MeshBasicMaterial({ color: 0xff6600 });
     const matHitFlash = new THREE.MeshLambertMaterial({ color: 0xff3333, emissive: 0xcc0000 });
     const matEyeDark = new THREE.MeshBasicMaterial({ color: 0x111111 });
 
-    function createHumanoidEnemy(isSoviet = false) {
+    function createHumanoidEnemy(isSoviet = false, isFlamer = false) {
       const g = new THREE.Group(); 
-      const cBody = isSoviet ? matSovietBody : baseMatSoldierBody; 
+      const cBody = isFlamer ? matUSFlamerBody : (isSoviet ? matSovietBody : baseMatSoldierBody); 
       const torso = new THREE.Mesh(ENEMY_GEO.torso, cBody); torso.position.y = 0.85; g.add(torso);
       const weaponMount = new THREE.Group(); weaponMount.position.set(0.17, 1.05, 0.35); g.add(weaponMount);
       let armorMesh = null;
-      if (isSoviet) { 
+      if (isFlamer) {
+          // 정면에서도 한눈에 보이도록 어깨 위로 솟은 대형 고휘도 나팜 탱크 2개 + 방열 앞치마 + 총구 불꽃
+          const tankL = new THREE.Mesh(ENEMY_GEO.fuelTank, matFuelTank); tankL.position.set(-0.22, 1.15, -0.18); g.add(tankL);
+          const capL = new THREE.Mesh(ENEMY_GEO.gasTankTop, matFuelTank); capL.position.set(-0.22, 1.47, -0.18); g.add(capL);
+          const tankR = new THREE.Mesh(ENEMY_GEO.fuelTank, matFuelTank); tankR.position.set(0.22, 1.15, -0.18); g.add(tankR);
+          const capR = new THREE.Mesh(ENEMY_GEO.gasTankTop, matFuelTank); capR.position.set(0.22, 1.47, -0.18); g.add(capR);
+          const apron = new THREE.Mesh(ENEMY_GEO.flamerApron, matFlamerApron); apron.position.set(0, 0.84, 0.14); g.add(apron);
+          const nozzle = new THREE.Mesh(ENEMY_GEO.flamerNozzle, matGun); nozzle.rotation.x = Math.PI / 2; nozzle.position.z = 0.30;
+          const pilot = new THREE.Mesh(ENEMY_GEO.pilotLight, matPilotFlame); pilot.position.set(0, 0, 0.72);
+          weaponMount.add(nozzle, pilot);
+          tankL.userData = { isEnemy: true, parent: g, isHead: false, isSoviet: false };
+          tankR.userData = { isEnemy: true, parent: g, isHead: false, isSoviet: false };
+          apron.userData = { isEnemy: true, parent: g, isHead: false, isSoviet: false };
+      } else if (isSoviet) { 
           armorMesh = new THREE.Mesh(ENEMY_GEO.armor, sovietArmor); armorMesh.position.set(0, 0.85, 0.12); g.add(armorMesh); 
           const barrel = new THREE.Mesh(ENEMY_GEO.sBarrel, matGun); barrel.position.z = 0.22; 
           const stock = new THREE.Mesh(ENEMY_GEO.sStock, matLeather); stock.position.z = -0.15; 
@@ -1960,11 +2070,18 @@
       }
       const headGroup = new THREE.Group(); headGroup.position.y = 1.34; g.add(headGroup); 
       const headMesh = new THREE.Mesh(ENEMY_GEO.head, baseMatSoldierSkin); headGroup.add(headMesh);
-      const eyeL = new THREE.Mesh(ENEMY_GEO.eye, matEyeDark); eyeL.position.set(-0.06, 0.01, 0.145); 
-      const eyeR = new THREE.Mesh(ENEMY_GEO.eye, matEyeDark); eyeR.position.set(0.06, 0.01, 0.145);
-      headGroup.add(eyeL, eyeR);
-      const helmet = new THREE.Mesh(ENEMY_GEO.helmet, baseMatSoldierHelmet); helmet.position.set(0, 1.50, 0); g.add(helmet); 
-      const brim = new THREE.Mesh(ENEMY_GEO.brim, baseMatSoldierHelmet); brim.position.set(0, 1.43, 0.02); brim.rotation.x = -0.12; g.add(brim);
+      if (isFlamer) {
+          const goggles = new THREE.Mesh(ENEMY_GEO.goggles, matFlamerGoggle);
+          goggles.position.set(0, 0.01, 0.145);
+          headGroup.add(goggles);
+      } else {
+          const eyeL = new THREE.Mesh(ENEMY_GEO.eye, matEyeDark); eyeL.position.set(-0.06, 0.01, 0.145); 
+          const eyeR = new THREE.Mesh(ENEMY_GEO.eye, matEyeDark); eyeR.position.set(0.06, 0.01, 0.145);
+          headGroup.add(eyeL, eyeR);
+      }
+      const curHelmMat = isFlamer ? matFlamerHelmet : baseMatSoldierHelmet;
+      const helmet = new THREE.Mesh(ENEMY_GEO.helmet, curHelmMat); helmet.position.set(0, 1.50, 0); g.add(helmet); 
+      const brim = new THREE.Mesh(ENEMY_GEO.brim, curHelmMat); brim.position.set(0, 1.43, 0.02); brim.rotation.x = -0.12; g.add(brim);
       if (isSoviet) { 
           const star = new THREE.Mesh(ENEMY_GEO.star, matRedStar); star.position.set(0, 1.50, 0.24); star.rotation.z = Math.PI / 4; g.add(star); 
       }
@@ -1986,16 +2103,19 @@
     function spawnEnemy(x, z) { 
         if (enemies.length >= MAX_ENEMIES || (gameState !== 'BUNKER' && gameState !== 'FINAL_WAVE' && gameState !== 'BOSS' && gameState !== 'ATOMIC_WAVE' && gameState !== 'SUPER_HARD' && gameState !== 'LAST_STAND')) return; 
         let sovietChance = isHardMode ? 0.5 : 0.15; 
+        let flamerChance = 0;
         if (isLastStand) {
-            sovietChance = (lsWave % 5 === 0) ? 0.85 : Math.min(0.75, Math.max(0, (lsWave - 2) * 0.12));
+            sovietChance = (lsWave % 5 === 0) ? 0.65 : Math.min(0.60, Math.max(0, (lsWave - 2) * 0.10));
+            flamerChance = lsWave >= 2 ? Math.min(0.32, 0.12 + lsWave * 0.02) : 0.10;
         } else if (!isHardMode && !isSuperHard) { 
             if (realTimeSeconds < 90) sovietChance = 0.0; 
             else if (realTimeSeconds < 150) sovietChance = 0.15; 
             else if (realTimeSeconds < 240) sovietChance = 0.40; 
             else sovietChance = 0.80; 
         } 
-        let isSoviet = isSuperHard ? true : (Math.random() < sovietChance); 
-        const rig = createHumanoidEnemy(isSoviet); 
+        let isFlamer = isLastStand && (Math.random() < flamerChance);
+        let isSoviet = !isFlamer && (isSuperHard ? true : (Math.random() < sovietChance)); 
+        const rig = createHumanoidEnemy(isSoviet, isFlamer); 
         
         const safeBound = MAP_SIZE / 2 - 4;
         let spawnX = Math.max(-safeBound, Math.min(safeBound, Math.round(x)));
@@ -2033,7 +2153,7 @@
 
         rig.group.position.set(spawnX + 0.5, spawnY, spawnZ + 0.5); 
         enemyGroup.add(rig.group); 
-        enemies.push({ rig: rig, group: rig.group, hp: 100, vy: 0, lastShoot: 0, lastDig: 0, isGrounded: true, walkTime: Math.random()*10, isSoviet: isSoviet, flinchUntil: 0, stuckCount: 0, lastPos: new THREE.Vector3(spawnX + 0.5, spawnY, spawnZ + 0.5) }); 
+        enemies.push({ rig: rig, group: rig.group, hp: isFlamer ? 140 : 100, vy: 0, lastShoot: 0, lastDig: 0, isGrounded: true, walkTime: Math.random()*10, isSoviet: isSoviet, isFlamer: isFlamer, burnUntil: 0, lastBurnTick: 0, flinchUntil: 0, stuckCount: 0, lastPos: new THREE.Vector3(spawnX + 0.5, spawnY, spawnZ + 0.5) }); 
     }
 
     function flashEnemyColor(meshes, enemyObj = null) { 
@@ -2101,6 +2221,18 @@
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i]; const ePos = e.group.position;
         const true3DDist = ePos.distanceTo(player.pos);
+
+        // [v2.5.0] 적군 화상 도트 데미지 처리
+        if (e.burnUntil && now < e.burnUntil && now - (e.lastBurnTick || 0) > 350) {
+            e.lastBurnTick = now;
+            e.hp -= 16;
+            spawnParticles(ePos.x, ePos.y + 0.9, ePos.z, 'fire');
+            flashEnemyColor(e.group.children, e);
+            if (e.hp <= 0) {
+                handleEnemyDeath(e, true);
+                continue;
+            }
+        }
 
         let lastEnemySpeedBoost = 1.0;
         if (isLastStand && !lsIsRest && enemies.length <= 2 && lsEnemiesToSpawn <= 0) {
@@ -2250,24 +2382,28 @@
                   e.vy = isHardMode ? 0.30 : 0.22; 
                   e.isGrounded = false; 
               } 
-              if (blockedAhead && now - e.lastDig > digCooldown) { 
+              const curDigCD = e.isFlamer ? Math.min(140, digCooldown * 0.3) : digCooldown;
+              if (blockedAhead && now - e.lastDig > curDigCD) { 
                   const probeX = ePos.x + normDir.x * 0.55;
                   const probeZ = ePos.z + normDir.z * 0.55;
                   let v = voxels.get(getKey(probeX, ePos.y + 1.1, probeZ)) || voxels.get(getKey(probeX, ePos.y + 0.2, probeZ));
                   if (v && !['concrete', 'bedrock', 'portal', 'atomic_door', 'water_rock', 'uboat'].includes(v.type)) { 
                       e.lastDig = now;
-                      v.hp -= 1; sfx.dig(); 
+                      v.hp -= e.isFlamer ? 3 : 1;
+                      if (e.isFlamer) { sfx.flame(); spawnParticles(v.x, v.y, v.z, 'fire'); } else sfx.dig(); 
                       if (v.hp <= 0) removeVoxel(v.x, v.y, v.z); 
                   } 
               } 
           }
 
-          if (e.isGrounded && player.pos.y < ePos.y - 0.8 && now - e.lastDig > digCooldown) { 
+          const curFloorDigCD = e.isFlamer ? Math.min(140, digCooldown * 0.3) : digCooldown;
+          if (e.isGrounded && player.pos.y < ePos.y - 0.8 && now - e.lastDig > curFloorDigCD) { 
               const digX = dist < 3.5 ? ePos.x : ePos.x + normDir.x * 0.45;
               const digZ = dist < 3.5 ? ePos.z : ePos.z + normDir.z * 0.45;
               let v = voxels.get(getKey(digX, ePos.y - 0.3, digZ)) || voxels.get(getKey(ePos.x, ePos.y - 0.3, ePos.z)); 
               if (v && !['concrete', 'bedrock', 'portal', 'atomic_door', 'water_rock', 'uboat'].includes(v.type)) { 
-                  e.lastDig = now; v.hp -= 1; sfx.dig(); 
+                  e.lastDig = now; v.hp -= e.isFlamer ? 3 : 1;
+                  if (e.isFlamer) { sfx.flame(); spawnParticles(v.x, v.y, v.z, 'fire'); } else sfx.dig(); 
                   if (v.hp <= 0) removeVoxel(v.x, v.y, v.z); 
               } 
           }
@@ -2321,7 +2457,25 @@
             e.rig.armL.rotation.set(-Math.PI / 2.1 + bob, 0, 0.35); 
         }
 
-        if (now >= (e.flinchUntil || 0) && true3DDist < 25 && now - e.lastShoot > (isHardMode ? shootCooldown : shootCooldown + Math.random()*500)) { 
+        if (e.isFlamer) {
+            if (now >= (e.flinchUntil || 0) && true3DDist < 7.5 && now - e.lastShoot > 170) {
+                e.lastShoot = now;
+                _eMuzzle.set(ePos.x, ePos.y + 1.1, ePos.z);
+                _pCenter.set(player.pos.x, player.pos.y + 1.0, player.pos.z);
+                _rayDir.subVectors(_pCenter, _eMuzzle).normalize();
+                const wallHit = fastVoxelRaycast(_eMuzzle, _rayDir, true3DDist);
+                sfx.flame();
+                spawnParticles(_eMuzzle.x + _rayDir.x * 1.5, _eMuzzle.y + _rayDir.y * 1.5, _eMuzzle.z + _rayDir.z * 1.5, 'fire');
+                if (!wallHit) {
+                    damagePlayer(0.35);
+                    player.burnUntil = now + 1200;
+                } else if (wallHit.voxel && !['concrete', 'bedrock', 'portal', 'uboat'].includes(wallHit.voxel.type)) {
+                    wallHit.voxel.hp -= 1.8;
+                    spawnParticles(wallHit.voxel.x, wallHit.voxel.y, wallHit.voxel.z, 'fire');
+                    if (wallHit.voxel.hp <= 0) removeVoxel(wallHit.voxel.x, wallHit.voxel.y, wallHit.voxel.z);
+                }
+            }
+        } else if (now >= (e.flinchUntil || 0) && true3DDist < 25 && now - e.lastShoot > (isHardMode ? shootCooldown : shootCooldown + Math.random()*500)) { 
           e.lastShoot = now; 
           _eMuzzle.set(ePos.x, ePos.y + 1.2, ePos.z); 
           _pCenter.set(player.pos.x, player.pos.y + 1.0, player.pos.z); 
@@ -2441,6 +2595,17 @@
               triggerPrimaryAction();
           }
       }
+      if (isPrimaryHeld && isLastStand && lsHasFlamethrower && player.activeSlot === 2) {
+          if (Date.now() - lastAutoFireTime > 110) {
+              lastAutoFireTime = Date.now();
+              triggerPrimaryAction();
+          }
+      } else {
+          ftPilotFlame.visible = false;
+      }
+      if (player.burnUntil && Date.now() < player.burnUntil) {
+          if (frameCount % 35 === 0) damagePlayer(0.25);
+      }
       if (isLastStand && player.activeSlot === 5) {
           const bTarget = getBuildTargetVoxel();
           if (bTarget) {
@@ -2545,6 +2710,11 @@
             if (en.isSoviet || Math.random() < 0.5) lsRes.powder += 1;
             if (Math.random() < 0.35) lsRes.concrete += 1;
             if (Math.random() < 0.16) { lsRes.med += 1; showToast("[LOOT] 의료품 +1 획득!"); }
+            if (en.isFlamer) {
+                const fuelDrop = 12 + Math.floor(Math.random() * 8);
+                lsRes.fuel += fuelDrop;
+                showToast(`[LOOT] 미군 화염방사병 처치! 나팜 기름 +${fuelDrop} 노획!`);
+            }
             updateLSResourceHUD();
         } else {
             if(Math.random() < 0.35) addScrap(en.isSoviet ? 3 : 1);
@@ -2585,9 +2755,21 @@
         document.getElementById('ls-val-powder').innerText = lsRes.powder;
         document.getElementById('ls-val-concrete').innerText = lsRes.concrete;
         document.getElementById('ls-val-med').innerText = lsRes.med;
+        const fuelEl = document.getElementById('ls-val-fuel');
+        if (fuelEl) fuelEl.innerText = lsRes.fuel;
         document.getElementById('nade-cnt').innerText = lsNadeCount;
         const slot1Text = document.querySelector('#slot-1 span:last-child');
         if (slot1Text) slot1Text.innerText = `1.${lsGunType}`;
+        const slot2Text = document.querySelector('#slot-2 span:last-child');
+        if (slot2Text) {
+            if (lsHasFlamethrower) {
+                slot2Text.innerText = `2.FLAME(${lsRes.fuel})`;
+                slot2Text.style.color = '#ff5533';
+            } else {
+                slot2Text.innerText = '2.FIST';
+                slot2Text.style.color = '';
+            }
+        }
         const b = LS_BUILD_TYPES[lsBuildIdx];
         const tierTag = lsWorkbenchTier < b.reqTier ? ` [Tier ${b.reqTier} 필요]` : '';
         const btn = document.getElementById('ls-build-cycle-btn');
@@ -2766,6 +2948,19 @@
     }
 
     let isPunching = false;
+
+    function startMobileFire(e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        isPrimaryHeld = true;
+        lastAutoFireTime = Date.now();
+        triggerPrimaryAction();
+    }
+
+    function stopMobileFire(e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        isPrimaryHeld = false;
+        if (typeof ftPilotFlame !== 'undefined') ftPilotFlame.visible = false;
+    }
     
     function triggerPrimaryAction(e) {
       if(e) { e.preventDefault(); e.stopPropagation(); } if (!isGameStarted || gameState === 'START' || gameState === 'ENDING' || gameState === 'TRANSITION' || gameState === 'AD_PLAYING' || gameState === 'REVIVE_WAIT') return; initAudio();
@@ -2804,16 +2999,36 @@
 
         if (isKar && player.ammoClip > 0) {
             isBolting = true;
-            setTimeout(() => {
-                sfx.bolt();
-                karBoltGroup.rotation.z = Math.PI / 3;
-                karBoltGroup.position.z = 0.11;
-                setTimeout(() => {
-                    karBoltGroup.rotation.z = 0;
+            sfx.bolt();
+            let bStep = 0;
+            const boltAnim = setInterval(() => {
+                bStep++;
+                if (bStep <= 4) {
+                    // 1단계: 노리쇠 손잡이 위로 젖히기 + 총기 살짝 기울임
+                    karBoltGroup.rotation.z = (bStep / 4) * (Math.PI / 2.2);
+                    pistolGroup.rotation.z = (bStep / 4) * 0.18;
+                    pistolGroup.rotation.x = 0.12;
+                } else if (bStep <= 9) {
+                    // 2단계: 노리쇠 뒤로 당기기 (탄피 배출)
+                    const pull = (bStep - 4) / 5;
+                    karBoltGroup.position.z = 0.04 + pull * 0.095;
+                    pistolGroup.position.z = (isADS ? -0.22 : -0.30) + pull * 0.035;
+                } else if (bStep <= 13) {
+                    // 3단계: 노리쇠 앞으로 밀어 넣기 및 잠금
+                    const push = 1 - ((bStep - 9) / 4);
+                    karBoltGroup.position.z = 0.04 + push * 0.095;
+                    karBoltGroup.rotation.z = push * (Math.PI / 2.2);
+                    pistolGroup.rotation.z = push * 0.18;
+                    pistolGroup.rotation.x = push * 0.12;
+                } else {
+                    clearInterval(boltAnim);
                     karBoltGroup.position.z = 0.04;
+                    karBoltGroup.rotation.z = 0;
+                    pistolGroup.rotation.z = 0;
+                    pistolGroup.rotation.x = 0;
                     isBolting = false;
-                }, 200);
-            }, 140);
+                }
+            }, 26);
         }
 
         if (isAtomicGun && hitWall && hitWall.voxel && !['bedrock', 'portal', 'uboat', 'concrete'].includes(hitWall.voxel.type)) {
@@ -2901,17 +3116,62 @@
         }
         createBulletTracer(pMuzzle.getWorldPosition(new THREE.Vector3()), finalHitPos, isAtomicGun ? 0x00ff66 : 0xffcc00);
       } else if (player.activeSlot === 2) { 
+        if (isLastStand && lsHasFlamethrower) {
+            if (lsRes.fuel <= 0) {
+                ftPilotFlame.visible = false;
+                sfx.dryFire();
+                showToast("[연료 고갈!] 미군 화염방사병을 처치해 기름(Fuel)을 노획하십시오!");
+                return;
+            }
+            lsRes.fuel--;
+            updateLSResourceHUD();
+            sfx.flame();
+            ftPilotFlame.visible = true;
+            ftPilotFlame.scale.set(0.8 + Math.random()*0.5, 0.8 + Math.random()*0.6, 0.8 + Math.random()*0.5);
+            for (let d = 1.5; d <= 5.5; d += 2.0) {
+                const fp = camPos.clone().add(rayDir.clone().multiplyScalar(d));
+                spawnParticles(fp.x, fp.y - 0.2, fp.z, 'fire');
+            }
+            const flameWall = fastVoxelRaycast(camPos, rayDir, 5.5);
+            if (flameWall && flameWall.voxel && !['bedrock', 'portal', 'uboat', 'concrete'].includes(flameWall.voxel.type)) {
+                flameWall.voxel.hp -= 1.2;
+                spawnParticles(flameWall.voxel.x, flameWall.voxel.y, flameWall.voxel.z, 'fire');
+                if (flameWall.voxel.hp <= 0) removeVoxel(flameWall.voxel.x, flameWall.voxel.y, flameWall.voxel.z);
+            }
+            let hitFlame = false;
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const en = enemies[i];
+                const toEn = en.group.position.clone().add(new THREE.Vector3(0, 0.9, 0)).sub(camPos);
+                const dist = toEn.length();
+                if (dist <= 6.8 && toEn.normalize().dot(rayDir) > 0.82) {
+                    if (flameWall && flameWall.distance < dist) continue;
+                    en.hp -= 18;
+                    en.burnUntil = Date.now() + 3500;
+                    hitFlame = true;
+                    spawnParticles(en.group.position.x, en.group.position.y + 0.9, en.group.position.z, 'fire');
+                    flashEnemyColor(en.group.children, en);
+                    if (en.hp <= 0) handleEnemyDeath(en, true);
+                }
+            }
+            if (hitFlame) showHitMarker(true);
+            return;
+        }
         if (isPunching) return; isPunching = true; sfx.punch();
-        const fistLv = isLastStand ? 0 : upgrades.fist;
-        const punchSpeed = 0.5 - (fistLv * 0.1);
+        const fistLv = isLastStand ? 0 : (Number(upgrades.fist) || 0);
+        const punchSpeed = Math.max(0.18, 0.5 - (fistLv * 0.1));
         const currentPunchRange = PUNCH_RANGE + (fistLv * 0.8);
-        fistL.position.z = -0.5; fistL.position.y = -0.1; fistL.rotation.x = -0.5; fistL.rotation.z = 0.3; setTimeout(() => { fistL.position.z = -0.25; fistL.position.y = -0.18; fistL.rotation.x = 0; fistL.rotation.z = 0; }, punchSpeed * 100); setTimeout(() => { fistR.position.z = -0.5; fistR.position.y = -0.1; fistR.rotation.x = -0.5; fistR.rotation.z = -0.3; setTimeout(() => { fistR.position.z = -0.25; fistR.position.y = -0.18; fistR.rotation.x = 0; fistR.rotation.z = 0; isPunching = false; }, punchSpeed * 150); }, punchSpeed * 150);
+        fistL.position.z = -0.5; fistL.position.y = -0.1; fistL.rotation.x = -0.5; fistL.rotation.z = 0.3;
+        setTimeout(() => { fistL.position.z = -0.25; fistL.position.y = -0.18; fistL.rotation.x = 0; fistL.rotation.z = 0; }, punchSpeed * 100);
+        setTimeout(() => {
+            fistR.position.z = -0.5; fistR.position.y = -0.1; fistR.rotation.x = -0.5; fistR.rotation.z = -0.3;
+            setTimeout(() => { fistR.position.z = -0.25; fistR.position.y = -0.18; fistR.rotation.x = 0; fistR.rotation.z = 0; isPunching = false; }, punchSpeed * 150);
+        }, punchSpeed * 150);
         const punchWall = fastVoxelRaycast(camPos, rayDir, currentPunchRange + 0.8); const ray = new THREE.Raycaster(); ray.setFromCamera(new THREE.Vector2(0, 0), camera); const hitEnemies = ray.intersectObjects(enemyGroup.children, true); 
         if ((gameState === 'BOSS' || gameState === 'SUPER_HARD' || gameState === 'LAST_STAND') && stalin) { const hitsBoss = ray.intersectObjects(stalin.group.children, true); if (hitsBoss.length > 0 && hitsBoss[0].distance < currentPunchRange + 0.8) { sfx.punchHit(); stalin.hp -= 50; showHitMarker(false); if (!isLastStand) { player.hp = Math.min(player.maxHp, player.hp + 2); showToast("[HEAL] 펀치 피흡 (+2)"); } flashEnemyColor(stalin.group.children); updateHUD(); } } 
         if (hitEnemies.length > 0 && hitEnemies[0].distance < currentPunchRange + 0.8 && (!punchWall || punchWall.distance > hitEnemies[0].distance)) { const hitObj = hitEnemies[0].object; const en = enemies.find(e => e.group === hitObj.userData.parent); if (en) { if (en.isSoviet && hitObj.userData.isArmor) { sfx.ricochet(); damagePlayer(5); showToast("[ARMOR] 흉갑 도탄! (역피해)"); showHitMarker(false); } else { sfx.punchHit(); en.hp -= 50; showHitMarker(false); if (!isLastStand) { player.hp = Math.min(player.maxHp, player.hp + 2); showToast("[HEAL] 펀치 피흡 (+2)"); } flashEnemyColor(en.group.children, en); updateHUD(); if (en.hp <= 0) handleEnemyDeath(en, false); } } }
-        if ((gameState === 'BUNKER' || gameState === 'ATOMIC_WAVE') && punchWall && punchWall.distance < 4.0) { if (punchWall.voxel.type === 'portal') triggerEnding('ARGENTINA'); if (punchWall.voxel.type === 'uboat') triggerEnding('UBOAT'); }
+        if ((gameState === 'BUNKER' || gameState === 'ATOMIC_WAVE') && !isLastStand && punchWall && punchWall.distance < 4.0) { if (punchWall.voxel.type === 'portal') triggerEnding('ARGENTINA'); if (punchWall.voxel.type === 'uboat') triggerEnding('UBOAT'); }
       } else if (player.activeSlot === 3) { 
-        const digWall = fastVoxelRaycast(camPos, rayDir, 4.5); if (digWall) { const v = digWall.voxel; if (v.type === 'bedrock' || v.type === 'portal') { showToast("[SYSTEM] 절대 파괴 불가 지형"); return; } if (v.type === 'uboat') { showToast("[SYSTEM] U-보트는 주먹(2번)으로 조작해야 합니다."); return; } sfx.dig(); screenShake = 0.02; v.hp -= player.digPower; spawnParticles(v.x, v.y, v.z, v.type); handToolGroup.rotation.x = -0.35; setTimeout(() => handToolGroup.rotation.x = 0, 100); if (v.hp <= 0) { if (v.type === 'atomic_door') triggerAtomicWave(); const vType = v.type; removeVoxel(v.x, v.y, v.z); if (onboardingStep === 2) { onboardingDigCount++; if (onboardingDigCount >= 3) onboardingStep = 3; updateOnboardingUI(); } if (isLastStand) { if (vType === 'rock' || Math.random() < 0.35) { lsRes.concrete += 1; updateLSResourceHUD(); } if (Math.random() < 0.25) { lsRes.metal += 1; updateLSResourceHUD(); } } else { if (upgrades.pickaxe > 0 && Math.random() < (upgrades.pickaxe * 0.10)) { player.hp = Math.min(player.maxHp, player.hp + 2); updateHUD(); document.getElementById('blood-overlay').style.boxShadow = 'inset 0 0 50px rgba(46,204,113,0.5)'; setTimeout(() => document.getElementById('blood-overlay').style.boxShadow = 'inset 0 0 150px rgba(255,0,0,0.8)', 300); } if (Math.random() < 0.05) addScrap(1); } } else { if (['atomic_door', 'water_rock'].includes(v.type)) showToast(`[특수 지형] 파쇄 중... (${v.hp}/${v.maxHp})`); else showToast(`[DIG] 파쇄 중... (${v.hp}/${v.maxHp})`); } }
+        const digWall = fastVoxelRaycast(camPos, rayDir, 4.5); if (digWall) { const v = digWall.voxel; if (v.type === 'bedrock' || v.type === 'portal') { showToast("[SYSTEM] 절대 파괴 불가 지형"); return; } if (v.type === 'uboat') { showToast("[SYSTEM] U-보트는 주먹(2번)으로 조작해야 합니다."); return; } sfx.dig(); screenShake = 0.02; v.hp -= player.digPower; spawnParticles(v.x, v.y, v.z, v.type); handToolGroup.rotation.x = -0.35; setTimeout(() => handToolGroup.rotation.x = 0, 100); if (v.hp <= 0) { if (v.type === 'atomic_door' && !isLastStand) triggerAtomicWave(); const vType = v.type; removeVoxel(v.x, v.y, v.z); if (onboardingStep === 2) { onboardingDigCount++; if (onboardingDigCount >= 3) onboardingStep = 3; updateOnboardingUI(); } if (isLastStand) { if (vType === 'rock' || Math.random() < 0.35) { lsRes.concrete += 1; updateLSResourceHUD(); } if (Math.random() < 0.25) { lsRes.metal += 1; updateLSResourceHUD(); } } else { if (upgrades.pickaxe > 0 && Math.random() < (upgrades.pickaxe * 0.10)) { player.hp = Math.min(player.maxHp, player.hp + 2); updateHUD(); document.getElementById('blood-overlay').style.boxShadow = 'inset 0 0 50px rgba(46,204,113,0.5)'; setTimeout(() => document.getElementById('blood-overlay').style.boxShadow = 'inset 0 0 150px rgba(255,0,0,0.8)', 300); } if (Math.random() < 0.05) addScrap(1); } } else { if (['atomic_door', 'water_rock'].includes(v.type)) showToast(`[특수 지형] 파쇄 중... (${v.hp}/${v.maxHp})`); else showToast(`[DIG] 파쇄 중... (${v.hp}/${v.maxHp})`); } }
       } else if (player.activeSlot === 4 && hasPanzerfaust) {
         const isInfinitePanzer = isSuperHard || gameState === 'ATOMIC_WAVE';
         if(!isInfinitePanzer) { hasPanzerfaust = false; panzerGroup.visible = false; document.getElementById('slot-4').style.display = 'none'; } panzerGroup.position.z += 0.2; setTimeout(() => panzerGroup.position.z -= 0.2, 100); if(!isInfinitePanzer) setTimeout(() => selectTool(1), 300); sfx.explosion(); screenShake = 0.35; recoilPitch += 0.12; let target = hitWall ? hitWall.point : camPos.clone().add(rayDir.clone().multiplyScalar(15)); const explColor = gameState === 'ATOMIC_WAVE' ? 0x00ff66 : 0xff4400; const expl = new THREE.Mesh(explGeo, new THREE.MeshBasicMaterial({color: explColor, transparent: true, opacity: 0.9})); expl.position.copy(target); scene.add(expl); let scale = 1; const explAnim = setInterval(() => { scale += 0.5; expl.scale.set(scale, scale, scale); expl.material.opacity -= 0.1; if (expl.material.opacity <= 0) { clearInterval(explAnim); scene.remove(expl); expl.material.dispose(); } }, 50);
@@ -2950,39 +3210,102 @@
         }
     }
 
-    function damagePlayer(amt) {
-      if (!isGameStarted || gameState === 'START' || gameState === 'ENDING' || gameState === 'TRANSITION' || gameState === 'AD_PLAYING' || isInvincible) return;
-      player.hp = Math.max(0, player.hp - amt); player.lastDamageTime = Date.now(); updateHUD();
-      const f = document.getElementById('damage-flash'); f.style.opacity = '1'; setTimeout(() => f.style.opacity = '0', 200);
-      if (player.hp <= 0) { 
-          let deathType = (gameState === 'BOSS' || gameState === 'SUPER_HARD') ? 'DEFEAT' : 'DEATH'; 
-          triggerEnding(deathType);
-      }
-    }
-
-    function updateHUD() {
-      document.getElementById('hp-num').innerText = Math.floor(player.hp); document.getElementById('hp-bar').style.width = `${(player.hp / player.maxHp) * 100}%`;
-      document.getElementById('ammo-clip').innerText = player.ammoClip > 100 ? "∞" : player.ammoClip; document.getElementById('ammo-reserve').innerText = player.ammoReserve > 100 ? "∞" : player.ammoReserve;
-      if(player.hp <= player.maxHp * 0.3 && player.hp > 0) document.getElementById('blood-overlay').classList.add('heartbeat-active'); else document.getElementById('blood-overlay').classList.remove('heartbeat-active');
-    }
-
-    function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 2200); }
-    
-    function selectTool(n) { 
-        if(!isGameStarted || gameState === 'START' || gameState === 'ENDING') return; 
-        if(!isHardMode && !isSuperHard && !isLastStand && gameState === 'BOSS' && n !== 2) { showToast("[SYSTEM] 보스전(일반)에서는 주먹만 사용할 수 있습니다!"); return; } 
-        player.activeSlot = n; 
-        document.querySelectorAll('.tool-slot').forEach(e=>e.classList.remove('active')); 
-        const slotEl = document.getElementById(`slot-${n}`);
-        if (slotEl) slotEl.classList.add('active'); 
-        updateHandModel(); 
-        if (onboardingStep === 1 && n === 3) {
-            onboardingStep = 2;
-        }
+    function selectTool(slotNum) {
+        if (!isGameStarted || gameState === 'START' || gameState === 'ENDING' || gameState === 'TRANSITION' || gameState === 'AD_PLAYING' || gameState === 'REVIVE_WAIT') return;
+        const slotEl = document.getElementById(`slot-${slotNum}`);
+        if (!slotEl || slotEl.classList.contains('disabled') || slotEl.style.display === 'none') return;
+        player.activeSlot = slotNum;
+        document.querySelectorAll('.tool-slot').forEach(el => el.classList.remove('active'));
+        slotEl.classList.add('active');
+        if (onboardingStep === 1 && slotNum === 3) onboardingStep = 2;
+        updateHandModel();
         updateOnboardingUI();
     }
 
-    function triggerReload(e) { if(e) { e.preventDefault(); e.stopPropagation(); } if (!isGameStarted || gameState === 'START' || player.isReloading || player.ammoClip === player.maxClip || player.ammoReserve <= 0) return; if (isADS) setADS(false); player.isReloading = true; sfx.reload(); showToast("[SYSTEM] 장전 중..."); let rAngle = 0; const reloadTime = (isLastStand && lsStimTimer > 0) ? 500 : 1000; const rAnim = setInterval(() => { rAngle += 0.3; pistolGroup.rotation.x = -Math.abs(Math.sin(rAngle)) * 1.5; pistolGroup.position.y = -0.15 - Math.abs(Math.sin(rAngle)) * 0.1; if(rAngle > Math.PI) { clearInterval(rAnim); pistolGroup.rotation.x = 0; pistolGroup.position.y = -0.15; } }, 30); setTimeout(() => { const amt = Math.min(player.maxClip - player.ammoClip, player.ammoReserve); player.ammoClip += amt; player.ammoReserve -= amt; player.isReloading = false; updateHUD(); updateOnboardingUI(); }, reloadTime); }
+    let toastTimeout = null;
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        if (!t) return;
+        t.innerText = msg;
+        t.style.opacity = '1';
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => { t.style.opacity = '0'; }, 2200);
+    }
+
+    function updateHUD() {
+        const hpPercent = Math.max(0, Math.min(100, Math.round((player.hp / player.maxHp) * 100)));
+        const hpNumEl = document.getElementById('hp-num');
+        const hpBarEl = document.getElementById('hp-bar');
+        if (hpNumEl) hpNumEl.innerText = `${Math.ceil(player.hp)}/${player.maxHp}`;
+        if (hpBarEl) hpBarEl.style.width = `${hpPercent}%`;
+        const clipEl = document.getElementById('ammo-clip');
+        const resEl = document.getElementById('ammo-reserve');
+        if (clipEl) clipEl.innerText = player.ammoClip;
+        if (resEl) resEl.innerText = player.ammoReserve;
+        const bloodEl = document.getElementById('blood-overlay');
+        if (bloodEl) {
+            if (player.hp > 0 && player.hp <= player.maxHp * 0.3) bloodEl.classList.add('heartbeat-active');
+            else bloodEl.classList.remove('heartbeat-active');
+        }
+    }
+
+    function damagePlayer(amount) {
+        if (isInvincible || gameState === 'ENDING' || gameState === 'START' || gameState === 'AD_PLAYING' || gameState === 'REVIVE_WAIT') return;
+        player.hp = Math.max(0, player.hp - amount);
+        player.lastDamageTime = Date.now();
+        updateHUD();
+        const flash = document.getElementById('damage-flash');
+        if (flash) {
+            flash.style.opacity = '1';
+            setTimeout(() => { flash.style.opacity = '0'; }, 100);
+        }
+        if (player.hp <= 0) {
+            if (gameState === 'BOSS') triggerEnding('DEFEAT');
+            else triggerEnding('DEATH');
+        }
+    }
+
+    function triggerReload(e) { 
+        if(e) { e.preventDefault(); e.stopPropagation(); } 
+        if (!isGameStarted || gameState === 'START' || player.isReloading || isBolting || player.ammoClip === player.maxClip || player.ammoReserve <= 0) return; 
+        if (isADS) setADS(false); 
+        player.isReloading = true; 
+        const isKar = isLastStand && lsGunType === 'KAR98K';
+        if (isKar) sfx.bolt(); else sfx.reload(); 
+        showToast("[SYSTEM] 장전 중..."); 
+        let rAngle = 0; 
+        const reloadTime = (isLastStand && lsStimTimer > 0) ? 500 : 1000; 
+        const rAnim = setInterval(() => { 
+            rAngle += 0.3; 
+            if (isKar) {
+                const s = Math.sin(rAngle);
+                pistolGroup.rotation.x = Math.abs(s) * 0.45;
+                pistolGroup.rotation.z = Math.abs(s) * 0.35;
+                pistolGroup.position.y = -0.15 - Math.abs(s) * 0.06;
+                karBoltGroup.rotation.z = Math.abs(s) * (Math.PI / 2.2);
+                karBoltGroup.position.z = 0.04 + Math.abs(s) * 0.095;
+            } else {
+                pistolGroup.rotation.x = -Math.abs(Math.sin(rAngle)) * 1.5; 
+                pistolGroup.position.y = -0.15 - Math.abs(Math.sin(rAngle)) * 0.1; 
+            }
+            if(rAngle > Math.PI) { 
+                clearInterval(rAnim); 
+                pistolGroup.rotation.x = 0; 
+                pistolGroup.rotation.z = 0;
+                pistolGroup.position.y = -0.15; 
+                karBoltGroup.rotation.z = 0;
+                karBoltGroup.position.z = 0.04;
+            } 
+        }, 30); 
+        setTimeout(() => { 
+            const amt = Math.min(player.maxClip - player.ammoClip, player.ammoReserve); 
+            player.ammoClip += amt; 
+            player.ammoReserve -= amt; 
+            player.isReloading = false; 
+            updateHUD(); 
+            updateOnboardingUI(); 
+        }, reloadTime); 
+    }
 
     document.addEventListener('pointerlockchange', () => {
         if (isGameStarted && (gameState === 'BUNKER' || gameState === 'BOSS' || gameState === 'SUPER_HARD' || gameState === 'FINAL_WAVE' || gameState === 'ATOMIC_WAVE' || gameState === 'LAST_STAND')) {
@@ -3054,7 +3377,7 @@
 
     const LS_TIER_UPGRADES = {
         2: { name: '[승급] Tier 2: 전술 병기 공작소', desc: 'MP40 기관단총, 막대 수류탄, 강철 철조망, 체코 헤지혹 설치를 해금합니다.', cost: { metal: 18, concrete: 12, powder: 4 }, costStr: '고철18 + 콘크리트12 + 화약4' },
-        3: { name: '[승급] Tier 3: 지하 요새 사령부', desc: 'Kar98k 소총(3인 관통), S-마인 지뢰, 판저파우스트, 총안구 벙커를 해금합니다.', cost: { metal: 32, concrete: 24, powder: 16 }, costStr: '고철32 + 콘크리트24 + 화약16' }
+        3: { name: '[승급] Tier 3: 지하 요새 사령부', desc: 'Kar98k 소총(3인 관통), 방탄복 시리즈 2종, 화염방사기, S-마인 지뢰, 총안구 벙커를 해금합니다.', cost: { metal: 32, concrete: 24, powder: 16 }, costStr: '고철32 + 콘크리트24 + 화약16' }
     };
 
     const LS_RECIPES = [
@@ -3065,7 +3388,9 @@
         { id: 'nade', reqTier: 2, name: 'M24 막대 수류탄 (+1개)', desc: '6번 슬롯 투척용 고폭 수류탄 (적 몰살 및 주변 일반 블록 파쇄).', cost: { powder: 3, metal: 2 }, costStr: '화약3 + 고철2' },
         { id: 'kar98k', reqTier: 3, name: 'Kar98k 볼트액션 소총 제작/장착', desc: '6발 탄창, 고속 볼트액션 & 일직선 적 최대 3명 관통 저격소총.', cost: { metal: 35, powder: 18 }, costStr: '고철35 + 화약18' },
         { id: 'ammo_kar', reqTier: 3, name: 'Kar98k 7.92mm 철갑탄 (+15발)', desc: '소총용 고위력 관통 철갑 탄약을 15발 보충합니다.', cost: { powder: 4, metal: 3 }, costStr: '화약4 + 고철3' },
-        { id: 'panzer', reqTier: 3, name: '단발 판저파우스트 (4번 슬롯)', desc: '광역 폭발 대전차 로켓포 1발을 장착합니다.', cost: { metal: 12, powder: 12 }, costStr: '고철12 + 화약12' },
+        { id: 'armor_1', reqTier: 3, name: '방탄복 I : 야전 강철 흉갑 (Max HP +45)', desc: '최대 체력과 현재 체력을 영구적으로 +45 증가시킵니다. (1회 제작)', cost: { metal: 20, concrete: 10 }, costStr: '고철20 + 콘크리트10' },
+        { id: 'armor_2', reqTier: 3, name: '방탄복 II : 중장갑 돌격 공병 방탄복 (Max HP +45)', desc: '최대 체력과 현재 체력을 추가로 +45 증가시킵니다. (총 +90까지 중첩 가능)', cost: { metal: 28, concrete: 16 }, costStr: '고철28 + 콘크리트16' },
+        { id: 'flamethrower', reqTier: 3, name: '플라멘베르퍼 41 화염방사기 (2번 주먹 대체)', desc: '광역 화상 도트딜 + 블록 파쇄! (단, 미군 화염방사병을 처치해 얻는 [기름]이 있어야 발사 가능)', cost: { metal: 30, powder: 15 }, costStr: '고철30 + 화약15' },
         { id: 'stim', reqTier: 3, name: '전투 아드레날린 주사', desc: '체력 +50 회복 및 15초간 이동속도 35% 증가 & 재장전 2배 가속', cost: { med: 2, powder: 3, metal: 2 }, costStr: '의료품2 + 화약3 + 고철2' }
     ];
 
@@ -3107,6 +3432,8 @@
         document.getElementById('c-powder').innerText = lsRes.powder;
         document.getElementById('c-concrete').innerText = lsRes.concrete;
         document.getElementById('c-med').innerText = lsRes.med;
+        const cFuel = document.getElementById('c-fuel');
+        if (cFuel) cFuel.innerText = lsRes.fuel;
         const list = document.getElementById('ls-craft-list');
         list.innerHTML = '';
 
@@ -3170,17 +3497,19 @@
 
         LS_RECIPES.forEach(r => {
             const isLocked = lsWorkbenchTier < r.reqTier;
-            let canAfford = !isLocked;
+            const isSoldOut = (r.id === 'armor_1' && lsArmorBought1) || (r.id === 'armor_2' && lsArmorBought2) || (r.id === 'flamethrower' && lsHasFlamethrower);
+            let canAfford = !isLocked && !isSoldOut;
             for (let k in r.cost) { if ((lsRes[k] || 0) < r.cost[k]) canAfford = false; }
             const div = document.createElement('div');
             div.className = 'upgrade-item';
-            if (isLocked) div.style.opacity = '0.5';
+            if (isLocked || isSoldOut) div.style.opacity = '0.5';
+            const btnLabel = isSoldOut ? '장착 완료' : (isLocked ? `T${r.reqTier} 필요` : '제작');
             div.innerHTML = `
                 <div class="upgrade-info">
                     <div class="upgrade-name">[Tier ${r.reqTier}] ${r.name} <span style="color:#bdc3c7;font-size:11px;">(${r.costStr})</span></div>
                     <div class="upgrade-desc">${r.desc}</div>
                 </div>
-                <button class="upgrade-buy-btn" ${!canAfford ? 'disabled' : ''} onclick="craftLSItem('${r.id}')">${isLocked ? `T${r.reqTier} 필요` : '제작'}</button>
+                <button class="upgrade-buy-btn" ${!canAfford ? 'disabled' : ''} onclick="craftLSItem('${r.id}')">${btnLabel}</button>
             `;
             list.appendChild(div);
         });
@@ -3189,6 +3518,7 @@
     function craftLSItem(id) {
         const r = LS_RECIPES.find(x => x.id === id);
         if (!r || lsWorkbenchTier < r.reqTier) return;
+        if ((id === 'armor_1' && lsArmorBought1) || (id === 'armor_2' && lsArmorBought2) || (id === 'flamethrower' && lsHasFlamethrower)) return;
         for (let k in r.cost) { if ((lsRes[k] || 0) < r.cost[k]) return; }
         for (let k in r.cost) lsRes[k] -= r.cost[k];
 
@@ -3216,10 +3546,18 @@
         } else if (id === 'ammo_kar') {
             player.ammoReserve += 15;
             showToast("[CRAFT] Kar98k 철갑탄 +15발 보충 완료!");
-        } else if (id === 'panzer') {
-            hasPanzerfaust = true;
-            document.getElementById('slot-4').style.display = 'flex';
-            showToast("[CRAFT] 단발 판저파우스트 장착! (4번 슬롯)");
+        } else if (id === 'armor_1') {
+            lsArmorBought1 = true;
+            player.maxHp += 45; player.hp += 45;
+            showToast("[ARMOR I 장착] 야전 강철 흉갑 착용! 최대 체력 +45 상승!");
+        } else if (id === 'armor_2') {
+            lsArmorBought2 = true;
+            player.maxHp += 45; player.hp += 45;
+            showToast("[ARMOR II 장착] 중장갑 돌격 방탄복 착용! 최대 체력 추가 +45 상승!");
+        } else if (id === 'flamethrower') {
+            lsHasFlamethrower = true;
+            updateHandModel();
+            showToast("[FLAMETHROWER] 2번 슬롯에 화염방사기 장착! (미군 화염방사병을 잡아 기름을 노획하세요!)");
         } else if (id === 'stim') {
             player.hp = Math.min(player.maxHp, player.hp + 50);
             lsStimTimer = 15;
@@ -3257,8 +3595,11 @@
         lsRestTimer = 45;
         lsEnemiesToSpawn = 0;
         lsWorkbenchTier = 1;
-        lsRes = { metal: 12, powder: 6, concrete: 8, med: 2 };
+        lsRes = { metal: 12, powder: 6, concrete: 8, med: 2, fuel: 0 };
         lsGunType = 'PISTOL';
+        lsHasFlamethrower = false;
+        lsArmorBought1 = false;
+        lsArmorBought2 = false;
         isBolting = false;
         lsNadeCount = 2;
         lsBuildIdx = 0;
@@ -3428,17 +3769,29 @@
       platformMode = mode; isHardMode = hard; isSuperHard = superHard; isLastStand = false; hasRevivedThisRun = false;
       runKillCount = 0; runMaxDepth = 0;
       onboardingStep = 0; onboardingDigCount = 0; onboardingMoveDist = 0; gasEventTriggered = false;
+      lsGunType = 'PISTOL'; lsHasFlamethrower = false; isBolting = false;
+
+      let savedUpg = safeGetItem('myBunkerUpgrades', upgrades) || upgrades;
+      upgrades = {
+          hp: Number(savedUpg.hp) || 0,
+          pickaxe: Number(savedUpg.pickaxe) || 0,
+          ammo: Number(savedUpg.ammo) || 0,
+          speed: Number(savedUpg.speed) || 0,
+          regen: Number(savedUpg.regen) || 0,
+          fist: Number(savedUpg.fist) || 0
+      };
 
       initAudio(); document.getElementById('start-modal').style.display = 'none'; document.getElementById('collection-modal').style.display = 'none'; document.getElementById('upgrade-modal').style.display = 'none';
       if(audioCtx) nextBeatTime = audioCtx.currentTime + 0.1;
 
       if(isSuperHard) { MAX_ENEMIES = 150; showToast("[SYSTEM] 슈퍼 하드 무한 모드 시작..."); } else if(isHardMode) { MAX_ENEMIES = 100; showToast("[SYSTEM] 지옥 난이도(안전심도 2배 + 총기 처치 시 HP+1) 활성화."); } else { showToast("[SYSTEM] 작전 개시: 5분간 생존하십시오."); }
       
-      player.maxHp = 100 + (upgrades.hp * 20); player.hp = player.maxHp; player.digPower = 1; player.baseSpeed = (0.11 + (upgrades.speed * 0.005)) * (isHardMode ? 1.15 : 1.0); player.speed = player.baseSpeed; player.maxClip = 6 + (upgrades.ammo * 3);
+      player.maxHp = 100 + (upgrades.hp * 20); player.hp = player.maxHp; player.digPower = 1; player.baseSpeed = (0.11 + (upgrades.speed * 0.006)) * (isHardMode ? 1.15 : 1.0); player.speed = player.baseSpeed; player.maxClip = 6 + (upgrades.ammo * 3);
       if (isSuperHard) { player.ammoClip = 999; player.ammoReserve = 9999; } else if (isHardMode) { player.ammoClip = player.maxClip; player.ammoReserve = 999; } else { player.ammoClip = player.maxClip; player.ammoReserve = player.maxClip * 4; }
 
       isGameStarted = true; gameState = isSuperHard ? 'SUPER_HARD' : 'BUNKER'; 
-      if (mode === 'MOBILE') document.getElementById('mobile-controls').style.display = 'block'; else document.body.requestPointerLock();
+      if (mode === 'MOBILE') document.getElementById('mobile-controls').style.display = 'block';
+      else { try { document.body.requestPointerLock(); } catch(e) {} }
       
       if (isSuperHard) { buildRuinsWorld(); player.pos.set(0, 1.5, 10); player.rotY = Math.PI; hasPanzerfaust = true; document.getElementById('slot-4').style.display = 'flex'; updateHUD(); spawnStalinBoss(); } 
       else { 
