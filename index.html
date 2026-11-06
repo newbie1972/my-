@@ -3307,8 +3307,65 @@
               if (choice === 'POUND' && dist < 4.0) { stalin.actionState = 'POUND_PREP'; stalin.actionTimer = now + (isSuperHard ? 100 : 1050); stalin.rig.armR.rotation.x = -Math.PI; showToast("[BOSS] 지면 강타 준비!"); } else if (choice === 'CHARGE') { stalin.actionState = 'CHARGE_PREP'; stalin.actionTimer = now + (isSuperHard ? 100 : 1250); stalin.chargeDir = dir.clone().normalize(); stalin.group.lookAt(player.pos.x, sPos.y, player.pos.z); const endPos = sPos.clone().add(stalin.chargeDir.clone().multiplyScalar(20)); stalin.chargeLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([sPos.clone().setY(sPos.y-0.8), endPos.clone().setY(sPos.y-0.8)]), new THREE.LineBasicMaterial({color: 0xff0000, linewidth: 5})); scene.add(stalin.chargeLine); showToast("[BOSS] 227호 명령: 붉은 돌진!"); } else if (choice === 'KATYUSHA') { stalin.actionState = 'KATYUSHA_PREP'; stalin.actionTimer = now + (isSuperHard ? 200 : 1850); stalin.rig.armR.rotation.x = -Math.PI; showToast("[BOSS] 카튜샤 폭격 지시!"); for(let i=0; i<3; i++) { let mx = Math.floor(player.pos.x + (Math.random()-0.5)*8); let mz = Math.floor(player.pos.z + (Math.random()-0.5)*8); let hitY = player.pos.y + 2; while(hitY >= MIN_DIG_Y && !isSolid(mx, hitY, mz)) hitY--; const marker = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.2, 16), new THREE.MeshBasicMaterial({color: 0xff0000, transparent:true, opacity:0.5})); marker.position.set(mx, hitY + 0.6, mz); scene.add(marker); stalin.katyushaMarkers.push({mesh: marker, x: mx, y: hitY, z: mz}); } } else if (choice === 'SUMMON') { stalin.actionState = 'SUMMON_PREP'; stalin.actionTimer = now + (isSuperHard ? 100 : 1000); showToast("[BOSS] 정예 친위대 소환!"); } else if (choice === 'WHIRLWIND') { stalin.actionState = 'WHIRLWIND'; stalin.actionTimer = now + 3500; showToast("[BOSS] 소비에트의 망치와 낫! (피격 데미지 반감)"); } else if (choice === 'COLLAPSE') { stalin.actionState = 'COLLAPSE_PREP'; stalin.actionTimer = now + (isSuperHard ? 100 : 800); showToast("[BOSS] 대지 붕괴!"); } else { stalin.nextPatternTime = now + 500; return; } stalin.nextPatternTime = now + (isSuperHard ? 500 : (3500 + Math.random() * 2000)); 
           }
           if (dist > 1.5) { dir.normalize().multiplyScalar(speed); const nextX = sPos.x + dir.x; const nextZ = sPos.z + dir.z; let blocked = (isSolid(nextX, sPos.y + 1.2, nextZ) || isSolid(nextX, sPos.y + 0.2, nextZ)); if (blocked && stalin.isGrounded) { stalin.vy = 0.3; stalin.isGrounded = false; } if (!blocked) { if (!isSolid(nextX, sPos.y + 0.5, sPos.z)) sPos.x = nextX; if (!isSolid(sPos.x, sPos.y + 0.5, nextZ)) sPos.z = nextZ; stalin.walkTime += speed * 3; stalin.rig.armL.rotation.x = Math.sin(stalin.walkTime); stalin.rig.armR.rotation.x = -Math.sin(stalin.walkTime); stalin.rig.legL.rotation.x = -Math.sin(stalin.walkTime); stalin.rig.legR.rotation.x = Math.sin(stalin.walkTime); } } else { stalin.rig.armL.rotation.x = 0; stalin.rig.armR.rotation.x = 0; stalin.rig.legL.rotation.x = 0; stalin.rig.legR.rotation.x = 0; } stalin.group.lookAt(player.pos.x, sPos.y, player.pos.z);
-          if (dist < 3.0 && now - stalin.lastAtk > atkCooldown) { stalin.lastAtk = now; stalin.rig.armR.rotation.x = -Math.PI/2; setTimeout(() => { if(stalin && stalin.actionState==='NORMAL') stalin.rig.armR.rotation.x = 0; }, 200); sfx.bossHit(); screenShake = 0.2; damagePlayer(dmg); if (player.isGrounded) applyPlayerKnockback(player.pos.clone().sub(sPos).normalize(), 2.0); else applyPlayerKnockback(player.pos.clone().sub(sPos).normalize(), 0.5); }
-      } else if (stalin.actionState === 'SUMMON_PREP') { stalin.group.lookAt(player.pos.x, sPos.y, player.pos.z); if (now > stalin.actionTimer) { stalin.actionState = 'NORMAL'; spawnEnemy(sPos.x + 2, sPos.z); spawnEnemy(sPos.x - 2, sPos.z); sfx.shoot(); } } else if (stalin.actionState === 'WHIRLWIND') { stalin.group.rotation.y += (isSuperHard ? 1.5 : 0.4); stalin.rig.armL.rotation.z = -Math.PI/2; stalin.rig.armL.rotation.x = 0; stalin.rig.armR.rotation.z = Math.PI/2; stalin.rig.armR.rotation.x = 0; const wwDir = new THREE.Vector3().subVectors(player.pos, sPos); wwDir.y = 0; wwDir.normalize().multiplyScalar(isSuperHard ? 0.6 : 0.20); const nextX = sPos.x + wwDir.x; const nextZ = sPos.z + wwDir.z; if (!isSolid(nextX, sPos.y+0.5, sPos.z)) sPos.x = nextX; if (!isSolid(sPos.x, sPos.y+0.5, nextZ)) sPos.z = nextZ; if (dist < 4.0 && now - stalin.lastAtk > 150) { stalin.lastAtk = now; damagePlayer(isSuperHard ? 2 : 7); sfx.punchHit(); player.pos.x += wwDir.x * 2.0; player.pos.z += wwDir.z * 2.0; } if (now > stalin.actionTimer) { stalin.actionState = 'NORMAL'; stalin.rig.armL.rotation.z = 0; stalin.rig.armR.rotation.z = 0; } } else if (stalin.actionState === 'COLLAPSE_PREP') { stalin.group.lookAt(player.pos.x, sPos.y, player.pos.z); if (now > stalin.actionTimer) { stalin.actionState = 'NORMAL'; const cx = Math.floor(sPos.x); const cz = Math.floor(sPos.z); const py = Math.floor(sPos.y); sfx.explosion(); screenShake = 0.3; isBatching = true; for(let dx=-2; dx<=2; dx++) { for(let dz=-2; dz<=2; dz++) { for(let y=py; y>=py-4; y--) removeVoxel(cx+dx, y, cz+dz, true); } } isBatching = false; dirtyVoxels.forEach(key => { const parts = key.split(','); updateVoxelMesh(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2])); }); dirtyVoxels.clear(); } }
+          if (dist < 3.0 && now - stalin.lastAtk > atkCooldown) { stalin.lastAtk = now; stalin.rig.armR.rotation.x = -Math.PI/2; setTimeout(() => { if(stalin && stalin.actionState==='NORMAL') stalin.rig.armR.rotation.x = 0; }, 200); sfx.bossHit(); screenShake = 0.2; damagePlayer(dmg, sPos); if (player.isGrounded) applyPlayerKnockback(player.pos.clone().sub(sPos).normalize(), 2.0); else applyPlayerKnockback(player.pos.clone().sub(sPos).normalize(), 0.5); }
+      } else if (stalin.actionState === 'POUND_PREP') {
+          stalin.group.lookAt(player.pos.x, sPos.y, player.pos.z);
+          if (now > stalin.actionTimer) {
+              stalin.actionState = 'NORMAL';
+              stalin.rig.armR.rotation.x = 0;
+              sfx.explosion(); screenShake = 0.3;
+              if (dist < 4.5) {
+                  damagePlayer(isSuperHard ? 2 : 12, sPos);
+                  applyPlayerKnockback(player.pos.clone().sub(sPos).normalize(), 4.0);
+              }
+              const cx = Math.floor(sPos.x), cz = Math.floor(sPos.z), cy = Math.floor(sPos.y - 1);
+              for(let dx=-1; dx<=1; dx++) for(let dz=-1; dz<=1; dz++) removeVoxel(cx+dx, cy, cz+dz, true);
+          }
+      } else if (stalin.actionState === 'CHARGE_PREP') {
+          if (now > stalin.actionTimer) {
+              stalin.actionState = 'CHARGING';
+              stalin.actionTimer = now + (isSuperHard ? 400 : 1200);
+              if (stalin.chargeLine) { scene.remove(stalin.chargeLine); stalin.chargeLine.geometry.dispose(); stalin.chargeLine = null; }
+          }
+      } else if (stalin.actionState === 'CHARGING') {
+          const nextX = sPos.x + stalin.chargeDir.x * (isSuperHard ? 2.5 : 0.45);
+          const nextZ = sPos.z + stalin.chargeDir.z * (isSuperHard ? 2.5 : 0.45);
+          const maxBound = MAP_SIZE / 2 - 2.0;
+          if (Math.abs(nextX) > maxBound || Math.abs(nextZ) > maxBound) {
+              stalin.actionState = 'STUNNED'; stalin.actionTimer = now + 1500;
+              showToast("[GROGGY] 스탈린이 벽에 충돌해 1.5초간 비틀거립니다! (공격 찬스)");
+          } else {
+              const cx = Math.floor(nextX), cz = Math.floor(nextZ), cy = Math.floor(sPos.y);
+              for(let dx=-1; dx<=1; dx++) for(let dy=0; dy<=1; dy++) for(let dz=-1; dz<=1; dz++) removeVoxel(cx+dx, cy+dy, cz+dz, true);
+              sPos.x = nextX; sPos.z = nextZ;
+              if (dist < 3.0) {
+                  damagePlayer(isSuperHard ? 5 : 15, sPos); sfx.punchHit(); screenShake = 0.25;
+                  applyPlayerKnockback(stalin.chargeDir.clone(), player.isGrounded ? 5.0 : 1.0);
+                  stalin.actionState = 'STUNNED'; stalin.actionTimer = now + 1200;
+              } else if (now > stalin.actionTimer || isSolid(nextX, sPos.y, nextZ)) {
+                  stalin.actionState = 'STUNNED'; stalin.actionTimer = now + 1500;
+                  showToast("[GROGGY] 돌진 후 1.5초간 빈틈 발생! 머리를 노리세요!");
+              }
+          }
+      } else if (stalin.actionState === 'STUNNED') {
+          stalin.rig.torso.rotation.x = 0.35; stalin.rig.head.rotation.x = 0.4; stalin.rig.armL.rotation.x = 0.5; stalin.rig.armR.rotation.x = 0.5;
+          if (now > stalin.actionTimer) {
+              stalin.rig.torso.rotation.x = 0; stalin.rig.head.rotation.x = 0; stalin.rig.armL.rotation.x = 0; stalin.rig.armR.rotation.x = 0;
+              stalin.actionState = 'NORMAL';
+          }
+      } else if (stalin.actionState === 'KATYUSHA_PREP') {
+          stalin.group.lookAt(player.pos.x, sPos.y, player.pos.z);
+          if (now > stalin.actionTimer) {
+              stalin.actionState = 'NORMAL'; stalin.rig.armR.rotation.x = 0;
+              stalin.katyushaMarkers.forEach(m => {
+                  scene.remove(m.mesh); m.mesh.geometry.dispose(); sfx.explosion(); screenShake = 0.25;
+                  spawnExplosionEffect(new THREE.Vector3(m.x, m.y + 1, m.z), 0xffaa00, 0.35, 0.14);
+                  for(let dx=-1; dx<=1; dx++) for(let dz=-1; dz<=1; dz++) for(let y=m.y+1; y>=m.y-2; y--) removeVoxel(m.x+dx, y, m.z+dz, true);
+                  if (Math.hypot(player.pos.x - m.x, player.pos.z - m.z) < 3.0 && Math.abs(player.pos.y - m.y) < 3) damagePlayer(isSuperHard ? 2 : 12, new THREE.Vector3(m.x, m.y, m.z));
+              });
+              stalin.katyushaMarkers = [];
+          }
+      } else if (stalin.actionState === 'SUMMON_PREP') { stalin.group.lookAt(player.pos.x, sPos.y, player.pos.z); if (now > stalin.actionTimer) { stalin.actionState = 'NORMAL'; spawnEnemy(sPos.x + 2, sPos.z); spawnEnemy(sPos.x - 2, sPos.z); sfx.shoot(); } } else if (stalin.actionState === 'WHIRLWIND') { stalin.group.rotation.y += (isSuperHard ? 1.5 : 0.4); stalin.rig.armL.rotation.z = -Math.PI/2; stalin.rig.armL.rotation.x = 0; stalin.rig.armR.rotation.z = Math.PI/2; stalin.rig.armR.rotation.x = 0; const wwDir = new THREE.Vector3().subVectors(player.pos, sPos); wwDir.y = 0; wwDir.normalize().multiplyScalar(isSuperHard ? 0.6 : 0.20); const nextX = sPos.x + wwDir.x; const nextZ = sPos.z + wwDir.z; if (!isSolid(nextX, sPos.y+0.5, sPos.z)) sPos.x = nextX; if (!isSolid(sPos.x, sPos.y+0.5, nextZ)) sPos.z = nextZ; if (dist < 4.0 && now - stalin.lastAtk > 150) { stalin.lastAtk = now; damagePlayer(isSuperHard ? 2 : 7, sPos); sfx.punchHit(); player.pos.x += wwDir.x * 2.0; player.pos.z += wwDir.z * 2.0; } if (now > stalin.actionTimer) { stalin.actionState = 'NORMAL'; stalin.rig.armL.rotation.z = 0; stalin.rig.armR.rotation.z = 0; } } else if (stalin.actionState === 'COLLAPSE_PREP') { stalin.group.lookAt(player.pos.x, sPos.y, player.pos.z); if (now > stalin.actionTimer) { stalin.actionState = 'NORMAL'; const cx = Math.floor(sPos.x); const cz = Math.floor(sPos.z); const py = Math.floor(sPos.y); sfx.explosion(); screenShake = 0.3; isBatching = true; for(let dx=-2; dx<=2; dx++) { for(let dz=-2; dz<=2; dz++) { for(let y=py; y>=py-4; y--) removeVoxel(cx+dx, y, cz+dz, true); } } flushDirtyVoxels(); } } else if (now > stalin.actionTimer + 2000) { stalin.actionState = 'NORMAL'; }
       document.getElementById('boss-hp-fill').style.width = `${(stalin.hp / stalin.maxHp) * 100}%`;
       if (stalin.hp <= 0) {
           if (isLastStand) {
