@@ -528,12 +528,12 @@
         </div>
         <div style="text-align: center; margin-bottom: 25px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 4px; border: 1px solid #333;">
             <label style="color: #fff; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: bold;">
-                <input type="checkbox" id="disclaimer-checkbox" style="width: 20px; height: 20px; cursor: pointer; accent-color: #e74c3c;">
+                <input type="checkbox" id="disclaimer-checkbox" checked style="width: 20px; height: 20px; cursor: pointer; accent-color: #e74c3c;">
                 <span id="disc-chk-text">위 내용을 충분히 숙지하였으며, 이에 동의합니다.</span>
             </label>
         </div>
         <div style="text-align: center;">
-            <button id="disclaimer-btn" class="platform-btn" style="background: #555; border-color: #333; color: #888; pointer-events: none; width: 100%; letter-spacing: 2px;" onclick="acceptDisclaimer()">동의 및 게임 입장 (ENTER)</button>
+            <button id="disclaimer-btn" class="platform-btn" style="background: #e74c3c; border-color: #c0392b; color: #fff; pointer-events: auto; width: 100%; letter-spacing: 2px;" onclick="acceptDisclaimer()">동의 및 게임 입장 (ENTER)</button>
         </div>
     </div>
   </div>
@@ -729,32 +729,30 @@
     Object.defineProperty(window, '__MBFG_AUTHOR__', { value: 'MB.F.G (mb.f.g)', writable: false, configurable: false });
     Object.defineProperty(window, '__mbfg_signature__', { value: 'mb.f.g / MB.F.G Official Build v2.9.5', writable: false, configurable: false });
 
-    // 1. 소스 보기(Ctrl+U), 페이지 저장(Ctrl+S), 개발자 도구(F12, Ctrl+Shift+I/J/C), 복사/드래그 원천 차단
+    // 1. 게임 조작(우클릭 ADS, WASD, 단축키)에 전혀 간섭하지 않는 안전한 보안 필터
     document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
     document.addEventListener('touchmove', function(e) { if(e.touches.length > 1) { e.preventDefault(); } }, { passive: false });
-    window.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; }, { capture: true });
-    window.addEventListener('dragstart', function(e) { e.preventDefault(); return false; }, { capture: true });
-    window.addEventListener('selectstart', function(e) { e.preventDefault(); return false; }, { capture: true });
+    window.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    window.addEventListener('dragstart', function(e) { e.preventDefault(); });
     window.addEventListener('copy', function(e) {
-        if (e.clipboardData) e.clipboardData.setData('text/plain', 'Protected by Copyright © MB.F.G (mb.f.g). Unauthorized copying is prohibited.');
+        if (e.clipboardData) e.clipboardData.setData('text/plain', 'Protected by Copyright © MB.F.G (mb.f.g).');
         e.preventDefault();
-        return false;
-    }, { capture: true });
-    window.addEventListener('cut', function(e) { e.preventDefault(); return false; }, { capture: true });
+    });
     window.addEventListener('keydown', function(e) {
-        const k = (e.key || '').toLowerCase();
-        if (
-            e.keyCode === 123 || e.key === 'F12' ||
-            (e.ctrlKey && e.shiftKey && (k === 'i' || k === 'j' || k === 'c' || k === 'k')) ||
-            (e.metaKey && e.altKey && (k === 'i' || k === 'j' || k === 'c' || k === 'u')) ||
-            ((e.ctrlKey || e.metaKey) && (k === 'u' || k === 's' || k === 'p'))
-        ) {
+        // 인게임 조작키(W,A,S,D,R,C,F,G,V,E,Space,1~4)는 절대 가로채지 않도록 보호
+        if (e.key === 'F12' || e.keyCode === 123) {
             e.preventDefault();
-            e.stopPropagation();
-            if (typeof showToast === 'function') showToast('[SECURITY] Protected by © MB.F.G (mb.f.g)');
             return false;
         }
-    }, { capture: true });
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['I', 'J', 'C', 'i', 'j', 'c'].includes(e.key)) {
+            e.preventDefault();
+            return false;
+        }
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (e.code === 'KeyU')) {
+            e.preventDefault();
+            return false;
+        }
+    });
 
     // 2. 콘솔 저작권 경고 배너 출력
     try {
@@ -907,7 +905,10 @@
        }
     };
 
-    let currentLang = safeGetItem('myBunkerLang', 'ko');
+    // 브라우저 언어를 자동 감지하여 레딧/해외 유저는 즉시 영어(en)로 시작되도록 개선
+    const _detectedBrowserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+    const _defaultInitLang = _detectedBrowserLang.startsWith('ko') ? 'ko' : (_detectedBrowserLang.startsWith('ja') ? 'ja' : 'en');
+    let currentLang = safeGetItem('myBunkerLang', _defaultInitLang);
 
     function applyLang(lang) {
         currentLang = lang; safeSetItem('myBunkerLang', lang); const t = i18n[lang];
@@ -5249,8 +5250,10 @@
     function playIntroCutscene(mode, hard, superHard, useAirdrop, use2xScrap) {
         initAudio(); document.getElementById('start-modal').style.display = 'none'; const container = document.getElementById('cutscene-container'); const imgEl = document.getElementById('cutscene-image'); const skipBtn = document.getElementById('cutscene-skip-btn');
         container.style.display = 'flex'; const scenes = [ "https://i.imgur.com/Jc6vTWj.png", "https://i.imgur.com/gLE8jxM.png", "https://i.imgur.com/FUtepm5.png" ]; let step = 0;
-        const nextScene = () => { if(step >= scenes.length) { endCutscene(mode, hard, superHard, useAirdrop, use2xScrap); return; } imgEl.style.opacity = 0; cutsceneTimeouts.push(setTimeout(() => { imgEl.src = scenes[step]; imgEl.style.opacity = 1; step++; cutsceneTimeouts.push(setTimeout(nextScene, 4000)); }, 1000)); };
-        skipBtn.onclick = () => { endCutscene(mode, hard, superHard, useAirdrop, use2xScrap); }; imgEl.src = scenes[0]; setTimeout(() => imgEl.style.opacity = 1, 100); step = 1; cutsceneTimeouts.push(setTimeout(nextScene, 4000));
+        // 해외 네트워크에서 Imgur 이미지가 차단될 경우 검은 화면에서 멈추지 않고 즉시 게임 시작
+        imgEl.onerror = () => { endCutscene(mode, hard, superHard, useAirdrop, use2xScrap); };
+        const nextScene = () => { if(step >= scenes.length) { endCutscene(mode, hard, superHard, useAirdrop, use2xScrap); return; } imgEl.style.opacity = 0; cutsceneTimeouts.push(setTimeout(() => { imgEl.src = scenes[step]; imgEl.style.opacity = 1; step++; cutsceneTimeouts.push(setTimeout(nextScene, 3200)); }, 800)); };
+        skipBtn.onclick = () => { endCutscene(mode, hard, superHard, useAirdrop, use2xScrap); }; imgEl.src = scenes[0]; setTimeout(() => imgEl.style.opacity = 1, 100); step = 1; cutsceneTimeouts.push(setTimeout(nextScene, 3200));
     }
     
     function endCutscene(mode, hard, superHard, useAirdrop, use2xScrap) { 
