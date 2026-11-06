@@ -3,6 +3,9 @@
 <head>
   <link rel="manifest" href="manifest.json">
   <meta charset="UTF-8">
+  <meta name="author" content="MB.F.G (mb.f.g)">
+  <meta name="copyright" content="Copyright (c) MB.F.G (mb.f.g). All Rights Reserved. Unauthorized copying, cloning, or redistribution is strictly prohibited.">
+  <meta name="generator" content="MB.F.G / mb.f.g Official Build v2.9.5">
   <!-- PWA & 풀스크린 모드용 메타 태그 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -10,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#000000">
   
-  <title>나의 벙커 (My Bunker) - v2.9.4 (Last Stand & MG42 Overhaul)</title>
+  <title>나의 벙커 (My Bunker) - v2.9.5 [Created by MB.F.G / mb.f.g]</title>
   
   <style>
     /* 글로벌 터치 잠금은 유지하되, UI 모달창에서는 풀기 위해 구조 조정 */
@@ -206,6 +209,10 @@
     .ls-act-btn { background: rgba(20, 28, 20, 0.92); border: 2px solid #2ecc71; color: #fff; padding: 6px 11px; border-radius: 6px; font-size: 11.5px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.7); font-family: monospace; white-space: nowrap; }
     .ls-act-btn:hover { background: #27ae60; color: #000; }
 
+    /* [v2.9.5 Anti-Theft] 상시 인게임 개발자 공식 워터마크 */
+    #mbfg-watermark { position: fixed; bottom: 6px; right: 10px; z-index: 9998; pointer-events: none; font-family: 'Courier New', monospace; font-size: 10.5px; font-weight: bold; color: rgba(255, 255, 255, 0.42); background: rgba(0, 0, 0, 0.45); padding: 2px 7px; border-radius: 3px; border: 1px solid rgba(255, 255, 255, 0.12); letter-spacing: 0.8px; text-shadow: 0 1px 2px #000; }
+    .mbfg-credit-badge { display: inline-block; margin-top: -18px; margin-bottom: 14px; padding: 4px 12px; background: rgba(231, 76, 60, 0.14); border: 1px solid rgba(231, 76, 60, 0.55); border-radius: 4px; color: #f1c40f; font-size: 11.5px; font-weight: bold; letter-spacing: 1px; font-family: monospace; }
+
     /* [CRITICAL FIX] Z플립/폴드 및 일반 모바일 HUD 초압축 시야 확보 */
     @media screen and (max-height: 650px), screen and (max-width: 850px) {
         #scrap-display { top: max(5px, env(safe-area-inset-top)); left: max(5px, env(safe-area-inset-left)); padding: 3px 5px !important; font-size: 9.5px !important; }
@@ -322,8 +329,12 @@
   <!-- [Phase 16 Splash Screen] -->
   <div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:99999; display:flex; flex-direction:column; justify-content:center; align-items:center; transition:opacity 0.8s; pointer-events:none;">
     <h1 style="color:#e74c3c; font-size:48px; letter-spacing:8px; font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; text-shadow:0 0 20px rgba(231,76,60,0.5); margin:0;">MY BUNKER</h1>
-    <p style="color:#7f8c8d; font-size:14px; font-family:monospace; margin-top:15px; letter-spacing:2px;">v2.9.4 TACTICAL PATCH...</p>
+    <p style="color:#7f8c8d; font-size:14px; font-family:monospace; margin-top:15px; letter-spacing:2px;">v2.9.5 OFFICIAL BUILD...</p>
+    <p style="color:#f39c12; font-size:12px; font-family:monospace; margin-top:8px; letter-spacing:1.5px;">CREATED BY MB.F.G (mb.f.g) · ALL RIGHTS RESERVED</p>
   </div>
+
+  <!-- [v2.9.5] 상시 저작권 워터마크 (도용 및 무단 녹화/배포 방지) -->
+  <div id="mbfg-watermark">© MB.F.G (mb.f.g) · v2.9.5 OFFICIAL</div>
 
   <div id="orientation-warning">
     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#e67e22" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:20px; animation: rotatePhone 2s infinite;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
@@ -506,10 +517,14 @@
            <button onclick="applyLang('ja')" class="platform-btn" style="min-width:auto; padding: 10px 20px; font-size:15px; background:#444; border-color:#222;">日本語</button>
         </div>
         <h1 id="disc-title" style="font-size: 26px; color: #e74c3c; text-align: center; margin-bottom: 20px; font-family: 'Courier New', sans-serif; letter-spacing: 1px;">[경고] 역사적 고지 및 면책 조항</h1>
-        <div style="color: #ccc; font-size: 14px; line-height: 1.7; margin-bottom: 25px; font-family: sans-serif;">
+        <div style="color: #ccc; font-size: 14px; line-height: 1.7; margin-bottom: 18px; font-family: sans-serif;">
             <p id="disc-p1" style="margin-bottom: 12px;">본 게임 <b>『나의 벙커(My Bunker)』</b>는 1945년 제2차 세계대전 말기를 모티브로 한 가상의 생존 시뮬레이션 게임입니다.</p>
             <p id="disc-p2" style="margin-bottom: 12px;">본 작품은 순수한 오락적 목적의 픽션이며, <b>전체주의 및 극단주의를 포함한 어떠한 형태의 전쟁 범죄, 인권 침해, 특정 이념을 결코 옹호하거나 미화하지 않습니다.</b></p>
             <p id="disc-p3">게임에 등장하는 모든 세력, 인물, 복장 등은 역사적 모티브를 둔 가상의 장치일 뿐이며, 개발진은 전쟁의 비극을 엄중히 인식하고 평화와 인류 보편의 가치를 지향합니다.</p>
+        </div>
+        <div id="disc-copyright-box" style="background: rgba(231, 76, 60, 0.1); border: 1px solid #c0392b; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; font-size: 11.5px; color: #f1c40f; font-family: monospace; text-align: center; line-height: 1.45;">
+            © 2025-2026 Developer <b>MB.F.G (mb.f.g)</b>. All Rights Reserved.<br>
+            무단 복제, 소스코드 도용, 재배포 및 상업적 도용을 엄격히 금지합니다.
         </div>
         <div style="text-align: center; margin-bottom: 25px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 4px; border: 1px solid #333;">
             <label style="color: #fff; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: bold;">
@@ -531,7 +546,8 @@
     </div>
 
     <h1 id="start-title">MY BUNKER</h1>
-    <h2 id="start-sub">1945 BERLIN: THE LAST STAND (v2.0)</h2>
+    <h2 id="start-sub" style="margin-bottom: 22px;">1945 BERLIN: THE LAST STAND (v2.9.5)</h2>
+    <div id="mbfg-start-credit" class="mbfg-credit-badge">OFFICIAL DEV: MB.F.G (mb.f.g) · COPYRIGHT PROTECTED</div>
     
     <div class="guide-box">
       <h3 id="guide-title">[전술 생존 브리핑]</h3>
@@ -703,9 +719,72 @@
   </div>
 
   <script>
+    /* ============================================================================
+     * [COPYRIGHT & ANTI-THEFT PROTECTION SYSTEM - v2.9.5]
+     * Official Developer ID: MB.F.G / mb.f.g
+     * All Rights Reserved. Unauthorized copying, cloning, or modification is prohibited.
+     * ============================================================================ */
+    const _DEV_SIG_UPPER = '\x4d\x42\x2e\x46\x2e\x47'; // "MB.F.G"
+    const _DEV_SIG_LOWER = '\x6d\x62\x2e\x66\x2e\x67'; // "mb.f.g"
+    Object.defineProperty(window, '__MBFG_AUTHOR__', { value: 'MB.F.G (mb.f.g)', writable: false, configurable: false });
+    Object.defineProperty(window, '__mbfg_signature__', { value: 'mb.f.g / MB.F.G Official Build v2.9.5', writable: false, configurable: false });
+
+    // 1. 소스 보기(Ctrl+U), 페이지 저장(Ctrl+S), 개발자 도구(F12, Ctrl+Shift+I/J/C), 복사/드래그 원천 차단
     document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
     document.addEventListener('touchmove', function(e) { if(e.touches.length > 1) { e.preventDefault(); } }, { passive: false });
-    window.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    window.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; }, { capture: true });
+    window.addEventListener('dragstart', function(e) { e.preventDefault(); return false; }, { capture: true });
+    window.addEventListener('selectstart', function(e) { e.preventDefault(); return false; }, { capture: true });
+    window.addEventListener('copy', function(e) {
+        if (e.clipboardData) e.clipboardData.setData('text/plain', 'Protected by Copyright © MB.F.G (mb.f.g). Unauthorized copying is prohibited.');
+        e.preventDefault();
+        return false;
+    }, { capture: true });
+    window.addEventListener('cut', function(e) { e.preventDefault(); return false; }, { capture: true });
+    window.addEventListener('keydown', function(e) {
+        const k = (e.key || '').toLowerCase();
+        if (
+            e.keyCode === 123 || e.key === 'F12' ||
+            (e.ctrlKey && e.shiftKey && (k === 'i' || k === 'j' || k === 'c' || k === 'k')) ||
+            (e.metaKey && e.altKey && (k === 'i' || k === 'j' || k === 'c' || k === 'u')) ||
+            ((e.ctrlKey || e.metaKey) && (k === 'u' || k === 's' || k === 'p'))
+        ) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof showToast === 'function') showToast('[SECURITY] Protected by © MB.F.G (mb.f.g)');
+            return false;
+        }
+    }, { capture: true });
+
+    // 2. 콘솔 저작권 경고 배너 출력
+    try {
+        console.log('%cSTOP! COPYRIGHT WARNING — © MB.F.G (mb.f.g)', 'color:#e74c3c; font-size:26px; font-weight:bold; text-shadow: 1px 1px 0 #000;');
+        console.log('%cThis game (My Bunker / 나의 벙커) is the intellectual property of developer MB.F.G (mb.f.g).\nUnauthorized source code theft, re-uploading, or credit removal is strictly monitored and prohibited.', 'color:#f1c40f; font-size:13px; font-family:monospace;');
+    } catch(e) {}
+
+    // 3. 워터마크 및 개발자 아이디(MB.F.G / mb.f.g) 훼손 감지 & 자동 복구(Anti-Tamper)
+    function verifyMBFGIntegrity() {
+        let wm = document.getElementById('mbfg-watermark');
+        const expectedText = `© ${_DEV_SIG_UPPER} (${_DEV_SIG_LOWER}) · v2.9.5 OFFICIAL`;
+        if (!wm) {
+            wm = document.createElement('div');
+            wm.id = 'mbfg-watermark';
+            document.body.appendChild(wm);
+        }
+        if (!wm.innerText.includes(_DEV_SIG_UPPER) || !wm.innerText.includes(_DEV_SIG_LOWER)) {
+            wm.innerText = expectedText;
+        }
+        wm.style.cssText = 'position:fixed !important; bottom:6px !important; right:10px !important; z-index:9998 !important; pointer-events:none !important; font-family:"Courier New",monospace !important; font-size:10.5px !important; font-weight:bold !important; color:rgba(255,255,255,0.45) !important; background:rgba(0,0,0,0.48) !important; padding:2px 7px !important; border-radius:3px !important; border:1px solid rgba(255,255,255,0.14) !important; display:block !important; visibility:visible !important; opacity:1 !important;';
+
+        const startCred = document.getElementById('mbfg-start-credit');
+        if (startCred && (!startCred.innerText.includes(_DEV_SIG_UPPER) || !startCred.innerText.includes(_DEV_SIG_LOWER))) {
+            startCred.innerText = `OFFICIAL DEV: ${_DEV_SIG_UPPER} (${_DEV_SIG_LOWER}) · COPYRIGHT PROTECTED`;
+        }
+        if (!document.title.includes(_DEV_SIG_UPPER) || !document.title.includes(_DEV_SIG_LOWER)) {
+            document.title = `나의 벙커 (My Bunker) - v2.9.5 [Created by ${_DEV_SIG_UPPER} / ${_DEV_SIG_LOWER}]`;
+        }
+    }
+    setInterval(verifyMBFGIntegrity, 1500);
 
     function safeRequestPointerLock() {
         try {
@@ -743,7 +822,7 @@
           disc3: "게임에 등장하는 모든 세력, 인물, 복장 등은 역사적 모티브를 둔 가상의 장치일 뿐이며, 개발진은 전쟁의 비극을 엄중히 인식하고 평화와 인류 보편의 가치를 지향합니다.",
           discChk: "위 내용을 충분히 숙지하였으며, 이에 동의합니다.",
           discBtn: "동의 및 게임 입장 (ENTER)",
-          startTitle: "MY BUNKER", startSub: "1945 BERLIN: THE LAST STAND (v2.9.4)",
+          startTitle: "MY BUNKER", startSub: "1945 BERLIN: THE LAST STAND (v2.9.5)",
           guideTitle: "[FuG 19 야전 사령부 핵심 요약]",
           guide1: "<b>조작:</b> 이동(WASD/조이스틱) · 사격/채굴(좌클릭) · <b>정밀조준(우클릭/ADS)</b>",
           guide2: "<b>생존:</b> <b>곡괭이(3번)</b>로 폭격 전 안전 심도(<b>1분:-10m / 2.5분:-30m / 4분:-45m</b>)까지 굴착!",
@@ -773,7 +852,7 @@
           disc3: "All factions, characters, and outfits are fictional devices inspired by history. The developers strictly recognize the tragedy of war and aim for universal peace.",
           discChk: "I have fully read and agree to the above terms.",
           discBtn: "Agree & Enter (ENTER)",
-          startTitle: "MY BUNKER", startSub: "1945 BERLIN: THE LAST STAND (v2.9.4)",
+          startTitle: "MY BUNKER", startSub: "1945 BERLIN: THE LAST STAND (v2.9.5)",
           guideTitle: "[FuG 19 HQ Core Summary]",
           guide1: "<b>Controls:</b> Move(WASD/Joy) · Fire/Dig(L-Click) · <b>ADS Aim(R-Click)</b>",
           guide2: "<b>Survive:</b> Dig down with <b>Pickaxe(3)</b> before raids (<b>1m:-10m / 2.5m:-30m / 4m:-45m</b>)!",
@@ -803,7 +882,7 @@
           disc3: "登場する勢力や人物は架空のものです。開発陣は戦争の悲劇を重く受け止め、平和を指向しています。",
           discChk: "上記の内容を十分に理解し、同意します。",
           discBtn: "同意してゲーム開始 (ENTER)",
-          startTitle: "MY BUNKER", startSub: "1945 BERLIN: THE LAST STAND (v2.9.4)",
+          startTitle: "MY BUNKER", startSub: "1945 BERLIN: THE LAST STAND (v2.9.5)",
           guideTitle: "[FuG 19 司令部核心要綱]",
           guide1: "<b>操作:</b> 移動(WASD/Joy) · 射撃/掘削(左クリック) · <b>ADS精密照準(右クリック)</b>",
           guide2: "<b>生存:</b> <b>ツルハシ(3)</b>で空襲前に安全深度(<b>1分:-10m / 2.5分:-30m / 4分:-45m</b>)まで掘削！",
@@ -1695,6 +1774,11 @@
         } 
         ctx.putImageData(imgData, 0, 0); 
         if (type === 'grid') { ctx.strokeStyle = 'rgba(0,0,0,0.65)'; ctx.lineWidth = 1; ctx.strokeRect(0, 0, 32, 32); } 
+        // [v2.9.5] 3D 텍스처 내부 비가시 마이크로 서명 각인 (MB.F.G / mb.f.g)
+        ctx.fillStyle = 'rgba(255,255,255,0.015)';
+        ctx.font = '4px monospace';
+        ctx.fillText('MB.F.G', 1, 5);
+        ctx.fillText('mb.f.g', 1, 30);
         const map = new THREE.CanvasTexture(cv); map.magFilter = THREE.NearestFilter; 
         return new THREE.MeshLambertMaterial({ map }); 
     }
@@ -5532,8 +5616,9 @@
 
     const pwaIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#2c3e50"/><path d="M128 384h256v64H128zm0-128h256v64H128zm0-128h256v64H128z" fill="#ecf0f1"/></svg>`;
     const pwaManifest = {
-        name: "나의 벙커 (My Bunker)",
-        short_name: "My Bunker",
+        name: "나의 벙커 (My Bunker) - MB.F.G (mb.f.g)",
+        short_name: "My Bunker (MB.F.G)",
+        description: "Official game by MB.F.G (mb.f.g). All Rights Reserved.",
         display: "fullscreen",
         orientation: "landscape",
         background_color: "#000000",
